@@ -369,43 +369,150 @@ display: none;
 ## 
 ## ℹ Use `spec()` to retrieve the full column specification for this data.
 ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>pm2.5 &lt;- read_csv(&quot;pm2.5_NY.csv&quot;)</code></pre>
-<pre><code>## Rows: 11129 Columns: 20
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr  (9): Date, Source, UNITS, Site Name, AQS_PARAMETER_DESC, CBSA_NAME, STA...
-## dbl (11): Site ID, POC, Daily Mean PM2.5 Concentration, DAILY_AQI_VALUE, DAI...
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>demographic&lt;- read_csv(&quot;NY_demographics.csv&quot;) #https://censusreporter.org/</code></pre>
-<pre><code>## Rows: 18 Columns: 5
-## ── Column specification ────────────────────────────────────────────────────────
-## Delimiter: &quot;,&quot;
-## chr (1): county
-## dbl (4): age, female, White, income
-## 
-## ℹ Use `spec()` to retrieve the full column specification for this data.
-## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-<pre class="r"><code>health &lt;- read_excel(&quot;chir_current_data.xlsx&quot;)</code></pre>
-<pre class="r"><code>lowbirthweight &lt;- lowbirthweight %&gt;% 
+<pre class="r"><code>pm2_5 &lt;- read_csv(&quot;pm2.5.csv&quot;)</code></pre>
+<pre><code>## New names:
+## Rows: 62 Columns: 8
+## ── Column specification
+## ──────────────────────────────────────────────────────── Delimiter: &quot;,&quot; chr
+## (3): State, County, Data Comment dbl (4): StateFIPS, CountyFIPS, Year, Value
+## lgl (1): ...8
+## ℹ Use `spec()` to retrieve the full column specification for this data. ℹ
+## Specify the column types or set `show_col_types = FALSE` to quiet this message.
+## • `` -&gt; `...8`</code></pre>
+<pre class="r"><code>edu_NY &lt;- read_excel(&quot;Edu_NY.xlsx&quot;)
+race_NY &lt;- read_excel(&quot;Race_NY.xlsx&quot;)</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...1`</code></pre>
+<pre class="r"><code>HHincome_NY &lt;- read_excel(&quot;HHincome_NY.xlsx&quot;)</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...1`</code></pre>
+<pre class="r"><code>Age_NY &lt;- read_excel(&quot;Age_NY.xlsx&quot;)</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...1`</code></pre>
+<pre class="r"><code>Sex_NY &lt;- read_excel(&quot;Sex_NY.xlsx&quot;)</code></pre>
+<pre><code>## New names:
+## • `` -&gt; `...1`</code></pre>
+<pre class="r"><code> #https://censusreporter.org/
+health &lt;- read_excel(&quot;chir_current_data.xlsx&quot;)</code></pre>
+<pre class="r"><code>pm2_5 &lt;- pm2_5 %&gt;% 
   janitor::clean_names()%&gt;%
-  select (region_county, average_births, percentage)%&gt;%
-  rename (county = &quot;region_county&quot;)
+  select (county,value) %&gt;%
+  rename (annual_pm2.5 = &quot;value&quot;)
+
+edu &lt;- edu_NY %&gt;% 
+  janitor::clean_names()%&gt;%
+  mutate (percentage_high_education = (bach_male+master_male+prof_male+doct_male+bach_female+master_female+prof_female+doct_female)/total) %&gt;%
+  filter(str_detect (name, &quot; County, NY&quot;)) %&gt;% 
+  mutate(county = str_replace (name, &quot; County, NY&quot;, &quot;&quot;)) %&gt;%
+  select(county,percentage_high_education) %&gt;%
+  mutate(county = str_replace (county, &quot;St.&quot;, &quot;St&quot;)) %&gt;%
+  mutate(county = str_replace (county, &quot;Stuben&quot;, &quot;Steuben&quot;))%&gt;%
+  select(county,percentage_high_education)
+  
 
   
-pm2.5 &lt;- pm2.5 %&gt;% 
+race_non_hisp_white &lt;- race_NY %&gt;% 
   janitor::clean_names()%&gt;%
-  separate(date, into = c(&quot;date&quot;, &quot;month&quot;,&quot;year&quot;), sep = &quot;/&quot;)%&gt;%
-  mutate(month=month.abb[as.numeric(month)]) %&gt;%
-  select(county, month, year, daily_mean_pm2_5_concentration, units, site_latitude, site_longitude) %&gt;% 
-  group_by(county) %&gt;% 
-  summarize(mean_pm2.5 = mean(daily_mean_pm2_5_concentration))
+  filter( x1 == &quot;White Non-Hispanic&quot;) %&gt;% 
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_non_hisp_white&quot;) %&gt;% 
+  select (county,percent_non_hisp_white) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_non_hisp_white ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
 
-demographic &lt;- demographic %&gt;% 
+race_non_hisp_black &lt;- race_NY %&gt;% 
   janitor::clean_names()%&gt;%
-  select(county, age, female, white, income) %&gt;% 
-  mutate(white= white/100)
+  filter( x1 == &quot;Black Non-Hispanic&quot;) %&gt;% 
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_non_hisp_black&quot;) %&gt;% 
+  select (county,percent_non_hisp_black) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_non_hisp_black ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+race_hisp_white &lt;- race_NY %&gt;% 
+  janitor::clean_names()%&gt;%
+  filter( x1 == &quot;White Hispanic&quot;) %&gt;% 
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_hisp_white&quot;) %&gt;% 
+  select (county,percent_hisp_white) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_hisp_white ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+race_hisp_black &lt;- race_NY %&gt;% 
+  janitor::clean_names()%&gt;%
+  filter( x1 == &quot;Black Hispanic&quot;) %&gt;% 
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_hisp_black&quot;) %&gt;% 
+  select (county,percent_hisp_black) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_hisp_black ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+race_merge &lt;- race_non_hisp_white %&gt;%
+  inner_join(race_non_hisp_black, by = &quot;county&quot;) %&gt;%
+  inner_join(race_hisp_white, by = &quot;county&quot;) %&gt;%
+  inner_join(race_hisp_black, by = &quot;county&quot;)
+
+
+
+income &lt;- HHincome_NY %&gt;%
+  janitor::clean_names() %&gt;% 
+  filter (x1 == &quot;percent_high_income&quot;) %&gt;%
+   pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_high_income&quot;) %&gt;%
+  select (county,percent_high_income) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_high_income ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+
+age &lt;- Age_NY %&gt;% 
+  janitor::clean_names() %&gt;% 
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;median_age&quot;) %&gt;%
+  select (county,median_age) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,median_age ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+sex &lt;- Sex_NY %&gt;% 
+  janitor::clean_names() %&gt;% 
+  filter (x1 == &quot;Male:&quot;) %&gt;%
+  pivot_longer(
+    albany_county_ny : yates_county_ny,
+    names_to = &quot;county&quot;,
+    values_to = &quot;percent_male&quot;) %&gt;%
+  select (county,percent_male) %&gt;%
+  separate(county, into = c(&quot;county&quot;, &quot;x&quot;), sep = &quot;_county_&quot;) %&gt;%
+  select (county,percent_male ) %&gt;%
+  mutate(county = str_replace (county, &quot;_&quot;, &quot; &quot;)) %&gt;%
+  mutate_at(vars(county), str_to_title)
+
+lowbirthweight &lt;- lowbirthweight %&gt;% 
+  janitor::clean_names()%&gt;%
+  select (region_county, percentage)%&gt;%
+  rename (county = &quot;region_county&quot;, percent_lowbirthweight = &quot;percentage&quot;) 
 
 health &lt;- health %&gt;%
   janitor::clean_names()%&gt;%
@@ -447,494 +554,738 @@ maternal &lt;- health %&gt;%
   inner_join(resp, by = &quot;county&quot;) %&gt;% 
   inner_join(cardio, by = &quot;county&quot;) 
 
+demographic_merge &lt;- age %&gt;%
+  inner_join(sex,  by = &quot;county&quot;) %&gt;%
+  inner_join(income, by = &quot;county&quot;) %&gt;% 
+  inner_join(race_merge, by = &quot;county&quot;) %&gt;% 
+  inner_join(edu, by = &quot;county&quot;) %&gt;%
+  mutate(county = str_replace (county, &quot;St &quot;, &quot;St. &quot;))
+  
+
 merge &lt;- lowbirthweight %&gt;% 
-  inner_join(pm2.5, by = &quot;county&quot;) %&gt;%
+  inner_join(pm2_5, by = &quot;county&quot;) %&gt;%
   inner_join(health_merge, by = &quot;county&quot;) %&gt;% 
-  inner_join(demographic, by = &quot;county&quot;) 
+  inner_join(demographic_merge, by = &quot;county&quot;) 
 
 merge &lt;- merge %&gt;% 
-  select (county, mean_pm2.5, age, female, white, income, everything())%&gt;%
+  select (county, annual_pm2.5,everything())%&gt;%
   mutate(asthma_hosp_rate_per_10k = as.numeric(asthma_hosp_rate_per_10k))%&gt;%
-  mutate(cardio_hosp_rate_per_10k = as.numeric(cardio_hosp_rate_per_10k))</code></pre>
+  mutate(cardio_hosp_rate_per_10k = as.numeric(cardio_hosp_rate_per_10k)) %&gt;%
+  mutate(premature_percentage = as.numeric(premature_percentage))%&gt;%
+  mutate(cancer_mortality_per_100k = as.numeric(cancer_mortality_per_100k ))</code></pre>
 <pre><code>## Warning: There was 1 warning in `mutate()`.
 ## ℹ In argument: `asthma_hosp_rate_per_10k =
 ##   as.numeric(asthma_hosp_rate_per_10k)`.
 ## Caused by warning:
 ## ! NAs introduced by coercion</code></pre>
+<pre><code>## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `premature_percentage = as.numeric(premature_percentage)`.
+## Caused by warning:
+## ! NAs introduced by coercion</code></pre>
+<pre><code>## Warning: There was 1 warning in `mutate()`.
+## ℹ In argument: `cancer_mortality_per_100k =
+##   as.numeric(cancer_mortality_per_100k)`.
+## Caused by warning:
+## ! NAs introduced by coercion</code></pre>
 </div>
 <div id="regression-pm2.5-and-low-birth-weight" class="section level4">
 <h4>regression pm2.5 and low birth weight</h4>
-<pre class="r"><code>lm_pm2.5_birthweight &lt;- lm(percentage~mean_pm2.5 , data=merge)
+<pre class="r"><code>lm_pm2.5_birthweight &lt;- lm(percent_lowbirthweight~annual_pm2.5 , data=merge)
 summary(lm_pm2.5_birthweight)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = percentage ~ mean_pm2.5, data = merge)
-## 
-## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -2.01327 -0.53344  0.07186  0.52344  1.68113 
-## 
-## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)    5.098      1.232   4.138 0.000772 ***
-## mean_pm2.5     0.505      0.212   2.382 0.029970 *  
-## ---
-## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
-## 
-## Residual standard error: 0.8443 on 16 degrees of freedom
-## Multiple R-squared:  0.2618, Adjusted R-squared:  0.2157 
-## F-statistic: 5.674 on 1 and 16 DF,  p-value: 0.02997</code></pre>
-<pre class="r"><code>lm_pm2.5_birthweight_adjusted &lt;-lm(percentage~mean_pm2.5+white+income , data=merge)
-summary(lm_pm2.5_birthweight_adjusted)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = percentage ~ mean_pm2.5 + white + income, data = merge)
+## lm(formula = percent_lowbirthweight ~ annual_pm2.5, data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -2.0542 -0.4477  0.2116  0.5205  0.8203 
+## -6.7519 -0.5694  0.1806  0.9024  2.4051 
 ## 
 ## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)   
-## (Intercept)  6.953e+00  1.771e+00   3.927  0.00152 **
-## mean_pm2.5   4.543e-01  2.336e-01   1.944  0.07222 . 
-## white       -1.076e+00  1.009e+00  -1.067  0.30408   
-## income      -2.041e-05  1.364e-05  -1.496  0.15681   
+##              Estimate Std. Error t value Pr(&gt;|t|)   
+## (Intercept)    4.0310     1.2493   3.227  0.00203 **
+## annual_pm2.5   0.4535     0.1766   2.567  0.01276 * 
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 0.8165 on 14 degrees of freedom
-## Multiple R-squared:  0.3958, Adjusted R-squared:  0.2664 
-## F-statistic: 3.057 on 3 and 14 DF,  p-value: 0.06325</code></pre>
+## Residual standard error: 1.454 on 60 degrees of freedom
+## Multiple R-squared:  0.09898,    Adjusted R-squared:  0.08396 
+## F-statistic: 6.591 on 1 and 60 DF,  p-value: 0.01276</code></pre>
+<pre class="r"><code>lm_pm2.5_birthweight_adjusted &lt;-lm(percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education , data=merge)
+summary(lm_pm2.5_birthweight_adjusted)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = percent_lowbirthweight ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white + percent_hisp_black + percentage_high_education, 
+##     data = merge)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -5.0055 -0.4537  0.2672  0.7294  2.0028 
+## 
+## Coefficients:
+##                            Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)                 7.94677    5.76276   1.379   0.1737  
+## annual_pm2.5                0.26664    0.21873   1.219   0.2282  
+## median_age                 -0.10418    0.05533  -1.883   0.0652 .
+## percent_high_income        -3.87772    4.10475  -0.945   0.3491  
+## percent_non_hisp_white      2.98950    4.82151   0.620   0.5379  
+## percent_non_hisp_black     12.58076    9.24825   1.360   0.1795  
+## percent_hisp_white         16.94944   17.75558   0.955   0.3441  
+## percent_hisp_black        -17.82571   42.01198  -0.424   0.6731  
+## percentage_high_education  -0.24683    3.29383  -0.075   0.9405  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.351 on 53 degrees of freedom
+## Multiple R-squared:  0.3135, Adjusted R-squared:  0.2099 
+## F-statistic: 3.025 on 8 and 53 DF,  p-value: 0.007118</code></pre>
 <div id="stepwise" class="section level5">
 <h5>stepwise</h5>
 <pre class="r"><code>step(lm_pm2.5_birthweight_adjusted, direction = &#39;both&#39;)</code></pre>
-<pre><code>## Start:  AIC=-3.82
-## percentage ~ mean_pm2.5 + white + income
+<pre><code>## Start:  AIC=45.55
+## percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq     RSS     AIC
-## - white       1   0.75889 10.0931 -4.4133
-## &lt;none&gt;                     9.3342 -3.8203
-## - income      1   1.49250 10.8267 -3.1504
-## - mean_pm2.5  1   2.52072 11.8549 -1.5173
+##                             Df Sum of Sq     RSS    AIC
+## - percentage_high_education  1    0.0102  96.698 43.557
+## - percent_hisp_black         1    0.3284  97.017 43.760
+## - percent_non_hisp_white     1    0.7013  97.390 43.998
+## - percent_high_income        1    1.6281  98.316 44.585
+## - percent_hisp_white         1    1.6624  98.351 44.607
+## - annual_pm2.5               1    2.7109  99.399 45.265
+## &lt;none&gt;                                    96.688 45.550
+## - percent_non_hisp_black     1    3.3759 100.064 45.678
+## - median_age                 1    6.4675 103.156 47.565
 ## 
-## Step:  AIC=-4.41
-## percentage ~ mean_pm2.5 + income
+## Step:  AIC=43.56
+## percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black
 ## 
-##              Df Sum of Sq     RSS     AIC
-## &lt;none&gt;                    10.0931 -4.4133
-## - income      1    1.3118 11.4049 -4.2139
-## + white       1    0.7589  9.3342 -3.8203
-## - mean_pm2.5  1    4.8489 14.9420  0.6485</code></pre>
+##                             Df Sum of Sq     RSS    AIC
+## - percent_hisp_black         1    0.3373  97.036 41.773
+## - percent_non_hisp_white     1    0.7998  97.498 42.067
+## - percent_hisp_white         1    2.1084  98.807 42.894
+## - annual_pm2.5               1    2.7154  99.414 43.274
+## &lt;none&gt;                                    96.698 43.557
+## - percent_non_hisp_black     1    3.4767 100.175 43.747
+## - percent_high_income        1    3.9879 100.686 44.062
+## + percentage_high_education  1    0.0102  96.688 45.550
+## - median_age                 1    7.2653 103.964 46.048
+## 
+## Step:  AIC=41.77
+## percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white
+## 
+##                             Df Sum of Sq     RSS    AIC
+## - percent_non_hisp_white     1    1.2535  98.289 40.568
+## - percent_hisp_white         1    1.9333  98.969 40.996
+## - annual_pm2.5               1    2.7548  99.791 41.508
+## &lt;none&gt;                                    97.036 41.773
+## - percent_non_hisp_black     1    3.3156 100.351 41.856
+## - percent_high_income        1    3.7372 100.773 42.116
+## + percent_hisp_black         1    0.3373  96.698 43.557
+## + percentage_high_education  1    0.0191  97.017 43.760
+## - median_age                 1    7.4932 104.529 44.384
+## 
+## Step:  AIC=40.57
+## percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_black + percent_hisp_white
+## 
+##                             Df Sum of Sq     RSS    AIC
+## - percent_hisp_white         1    0.6890  98.978 39.001
+## - annual_pm2.5               1    1.9873 100.277 39.809
+## - percent_non_hisp_black     1    2.9014 101.191 40.372
+## - percent_high_income        1    3.1909 101.480 40.549
+## &lt;none&gt;                                    98.289 40.568
+## + percent_non_hisp_white     1    1.2535  97.036 41.773
+## + percent_hisp_black         1    0.7910  97.498 42.067
+## + percentage_high_education  1    0.2070  98.082 42.438
+## - median_age                 1    7.2274 105.517 42.968
+## 
+## Step:  AIC=39
+## percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_black
+## 
+##                             Df Sum of Sq     RSS    AIC
+## - annual_pm2.5               1    2.1570 101.135 38.338
+## - percent_high_income        1    2.5040 101.482 38.550
+## &lt;none&gt;                                    98.978 39.001
+## + percent_hisp_white         1    0.6890  98.289 40.568
+## + percentage_high_education  1    0.4551  98.523 40.716
+## + percent_hisp_black         1    0.1537  98.824 40.905
+## - percent_non_hisp_black     1    6.5238 105.502 40.959
+## + percent_non_hisp_white     1    0.0091  98.969 40.996
+## - median_age                 1    7.6698 106.648 41.629
+## 
+## Step:  AIC=38.34
+## percent_lowbirthweight ~ median_age + percent_high_income + percent_non_hisp_black
+## 
+##                             Df Sum of Sq     RSS    AIC
+## - percent_high_income        1    1.1669 102.302 37.049
+## &lt;none&gt;                                   101.135 38.338
+## + annual_pm2.5               1    2.1570  98.978 39.001
+## + percent_hisp_white         1    0.8587 100.277 39.809
+## + percentage_high_education  1    0.3690 100.766 40.111
+## + percent_hisp_black         1    0.0682 101.067 40.296
+## + percent_non_hisp_white     1    0.0581 101.077 40.302
+## - median_age                 1    8.6493 109.785 41.426
+## - percent_non_hisp_black     1   11.1390 112.274 42.816
+## 
+## Step:  AIC=37.05
+## percent_lowbirthweight ~ median_age + percent_non_hisp_black
+## 
+##                             Df Sum of Sq    RSS    AIC
+## &lt;none&gt;                                   102.30 37.049
+## + percentage_high_education  1    1.4733 100.83 38.150
+## + percent_high_income        1    1.1669 101.14 38.338
+## + annual_pm2.5               1    0.8200 101.48 38.550
+## + percent_non_hisp_white     1    0.0433 102.26 39.023
+## + percent_hisp_white         1    0.0400 102.26 39.025
+## + percent_hisp_black         1    0.0005 102.30 39.049
+## - median_age                 1    9.2828 111.58 40.434
+## - percent_non_hisp_black     1   10.0049 112.31 40.834</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = percentage ~ mean_pm2.5 + income, data = merge)
+## lm(formula = percent_lowbirthweight ~ median_age + percent_non_hisp_black, 
+##     data = merge)
 ## 
 ## Coefficients:
-## (Intercept)   mean_pm2.5       income  
-##   5.612e+00    5.648e-01   -1.905e-05</code></pre>
+##            (Intercept)              median_age  percent_non_hisp_black  
+##                11.5269                 -0.1142                  8.0498</code></pre>
 </div>
 </div>
 <div id="regression-pm2.5-and-premature-birth" class="section level4">
 <h4>regression pm2.5 and premature birth</h4>
-<pre class="r"><code>lm_pm2.5_premature &lt;- lm(premature_percentage ~ mean_pm2.5 , data=merge)
+<pre class="r"><code>lm_pm2.5_premature &lt;- lm(premature_percentage ~ annual_pm2.5 , data=merge)
 summary(lm_pm2.5_premature)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = premature_percentage ~ mean_pm2.5, data = merge)
+## lm(formula = premature_percentage ~ annual_pm2.5, data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -2.5546 -0.4586  0.1206  0.6754  1.0640 
+## -3.3611 -0.3666  0.0279  0.6960  2.1960 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   7.2357     1.3534   5.346 6.55e-05 ***
-## mean_pm2.5    0.3251     0.2329   1.396    0.182    
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    6.9789     0.9329   7.481 4.15e-10 ***
+## annual_pm2.5   0.2637     0.1316   2.004   0.0497 *  
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 0.9275 on 16 degrees of freedom
-## Multiple R-squared:  0.1086, Adjusted R-squared:  0.05284 
-## F-statistic: 1.948 on 1 and 16 DF,  p-value: 0.1818</code></pre>
-<pre class="r"><code>lm_pm2.5_premature_adjusted &lt;-lm(premature_percentage ~ mean_pm2.5+white+income, data=merge)
+## Residual standard error: 1.075 on 59 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.06372,    Adjusted R-squared:  0.04785 
+## F-statistic: 4.015 on 1 and 59 DF,  p-value: 0.04969</code></pre>
+<pre class="r"><code>lm_pm2.5_premature_adjusted &lt;-lm(premature_percentage ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education, data=merge)
 summary(lm_pm2.5_premature_adjusted)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = premature_percentage ~ mean_pm2.5 + white + income, 
+## lm(formula = premature_percentage ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white + percent_hisp_black + percentage_high_education, 
 ##     data = merge)
 ## 
 ## Residuals:
-##      Min       1Q   Median       3Q      Max 
-## -2.51762 -0.26072  0.05644  0.61376  1.07342 
+##     Min      1Q  Median      3Q     Max 
+## -3.4905 -0.4007 -0.0057  0.6700  2.0638 
 ## 
 ## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)   
-## (Intercept)  7.344e+00  2.099e+00   3.499  0.00354 **
-## mean_pm2.5   3.867e-01  2.769e-01   1.396  0.18434   
-## white        1.978e-01  1.196e+00   0.165  0.87097   
-## income      -1.291e-05  1.617e-05  -0.798  0.43796   
+##                            Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)                 0.31246    4.51992   0.069   0.9452  
+## annual_pm2.5                0.28501    0.17159   1.661   0.1027  
+## median_age                  0.07683    0.04881   1.574   0.1216  
+## percent_high_income        -1.48965    3.20894  -0.464   0.6444  
+## percent_non_hisp_white      3.97894    3.80292   1.046   0.3003  
+## percent_non_hisp_black     14.83068    7.23532   2.050   0.0454 *
+## percent_hisp_white         13.44549   13.95152   0.964   0.3396  
+## percent_hisp_black        -12.10939   32.84244  -0.369   0.7138  
+## percentage_high_education  -1.35504    2.57490  -0.526   0.6010  
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 0.9678 on 14 degrees of freedom
-## Multiple R-squared:  0.1507, Adjusted R-squared:  -0.03124 
-## F-statistic: 0.8283 on 3 and 14 DF,  p-value: 0.5</code></pre>
+## Residual standard error: 1.056 on 52 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.2047, Adjusted R-squared:  0.0823 
+## F-statistic: 1.673 on 8 and 52 DF,  p-value: 0.1275</code></pre>
 <div id="stepwise-1" class="section level5">
 <h5>stepwise</h5>
 <pre class="r"><code>step(lm_pm2.5_premature_adjusted, direction = &#39;both&#39;)</code></pre>
-<pre><code>## Start:  AIC=2.3
-## premature_percentage ~ mean_pm2.5 + white + income
+<pre><code>## Start:  AIC=14.89
+## premature_percentage ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq    RSS     AIC
-## - white       1   0.02563 13.138 0.33263
-## - income      1   0.59707 13.710 1.09899
-## &lt;none&gt;                    13.113 2.29748
-## - mean_pm2.5  1   1.82632 14.939 2.64463
+##                             Df Sum of Sq    RSS    AIC
+## - percent_hisp_black         1    0.1515 58.118 13.048
+## - percent_high_income        1    0.2402 58.207 13.141
+## - percentage_high_education  1    0.3087 58.275 13.212
+## - percent_hisp_white         1    1.0353 59.002 13.968
+## - percent_non_hisp_white     1    1.2203 59.187 14.159
+## &lt;none&gt;                                   57.966 14.888
+## - median_age                 1    2.7615 60.728 15.727
+## - annual_pm2.5               1    3.0754 61.042 16.042
+## - percent_non_hisp_black     1    4.6836 62.650 17.628
 ## 
-## Step:  AIC=0.33
-## premature_percentage ~ mean_pm2.5 + income
+## Step:  AIC=13.05
+## premature_percentage ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percentage_high_education
 ## 
-##              Df Sum of Sq    RSS      AIC
-## - income      1   0.62586 13.764 -0.82970
-## &lt;none&gt;                    13.138  0.33263
-## - mean_pm2.5  1   2.04051 15.179  0.93130
-## + white       1   0.02563 13.113  2.29748
+##                             Df Sum of Sq    RSS    AIC
+## - percent_high_income        1    0.1461 58.264 11.201
+## - percentage_high_education  1    0.3384 58.456 11.402
+## - percent_hisp_white         1    0.9470 59.065 12.034
+## - percent_non_hisp_white     1    1.5806 59.699 12.684
+## &lt;none&gt;                                   58.118 13.048
+## - median_age                 1    2.6782 60.796 13.796
+## - annual_pm2.5               1    3.1038 61.222 14.221
+## + percent_hisp_black         1    0.1515 57.966 14.888
+## - percent_non_hisp_black     1    4.5670 62.685 15.662
 ## 
-## Step:  AIC=-0.83
-## premature_percentage ~ mean_pm2.5
+## Step:  AIC=11.2
+## premature_percentage ~ annual_pm2.5 + median_age + percent_non_hisp_white + 
+##     percent_non_hisp_black + percent_hisp_white + percentage_high_education
 ## 
-##              Df Sum of Sq    RSS      AIC
-## &lt;none&gt;                    13.764 -0.82970
-## - mean_pm2.5  1   1.67602 15.440 -0.76138
-## + income      1   0.62586 13.138  0.33263
-## + white       1   0.05442 13.710  1.09899</code></pre>
+##                             Df Sum of Sq    RSS    AIC
+## - percent_hisp_white         1    0.8367 59.101 10.071
+## - percent_non_hisp_white     1    1.4346 59.699 10.685
+## - percentage_high_education  1    1.8034 60.067 11.060
+## &lt;none&gt;                                   58.264 11.201
+## - median_age                 1    2.5504 60.815 11.814
+## - annual_pm2.5               1    2.9588 61.223 12.223
+## + percent_high_income        1    0.1461 58.118 13.048
+## + percent_hisp_black         1    0.0574 58.207 13.141
+## - percent_non_hisp_black     1    4.4429 62.707 13.684
+## 
+## Step:  AIC=10.07
+## premature_percentage ~ annual_pm2.5 + median_age + percent_non_hisp_white + 
+##     percent_non_hisp_black + percentage_high_education
+## 
+##                             Df Sum of Sq    RSS     AIC
+## - percent_non_hisp_white     1    0.5984 59.699  8.6851
+## - percentage_high_education  1    1.6925 60.793  9.7929
+## &lt;none&gt;                                   59.101 10.0706
+## - annual_pm2.5               1    2.8385 61.939 10.9321
+## - median_age                 1    2.8770 61.978 10.9700
+## + percent_hisp_white         1    0.8367 58.264 11.2008
+## - percent_non_hisp_black     1    3.6495 62.750 11.7256
+## + percent_hisp_black         1    0.0887 59.012 11.9789
+## + percent_high_income        1    0.0358 59.065 12.0336
+## 
+## Step:  AIC=8.69
+## premature_percentage ~ annual_pm2.5 + median_age + percent_non_hisp_black + 
+##     percentage_high_education
+## 
+##                             Df Sum of Sq    RSS     AIC
+## &lt;none&gt;                                   59.699  8.6851
+## - percentage_high_education  1    2.1665 61.866  8.8596
+## - annual_pm2.5               1    2.3295 62.029  9.0201
+## - median_age                 1    3.0501 62.749  9.7247
+## + percent_non_hisp_white     1    0.5984 59.101 10.0706
+## + percent_hisp_black         1    0.3937 59.305 10.2815
+## + percent_hisp_white         1    0.0005 59.699 10.6846
+## + percent_high_income        1    0.0000 59.699 10.6851
+## - percent_non_hisp_black     1    6.1054 65.805 12.6247</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = premature_percentage ~ mean_pm2.5, data = merge)
+## lm(formula = premature_percentage ~ annual_pm2.5 + median_age + 
+##     percent_non_hisp_black + percentage_high_education, data = merge)
 ## 
 ## Coefficients:
-## (Intercept)   mean_pm2.5  
-##      7.2357       0.3251</code></pre>
+##               (Intercept)               annual_pm2.5  
+##                   4.31593                    0.23056  
+##                median_age     percent_non_hisp_black  
+##                   0.07596                    7.19979  
+## percentage_high_education  
+##                  -2.28316</code></pre>
 </div>
 </div>
 <div id="regression-pm2.5-and-cancer-mortality" class="section level4">
 <h4>regression pm2.5 and cancer mortality</h4>
-<pre class="r"><code>lm_pm2.5_cancer &lt;- lm(cancer_mortality_per_100k ~ mean_pm2.5 , data=merge)
+<pre class="r"><code>lm_pm2.5_cancer &lt;- lm(cancer_mortality_per_100k ~ annual_pm2.5 , data=merge)
 summary(lm_pm2.5_cancer)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cancer_mortality_per_100k ~ mean_pm2.5, data = merge)
+## lm(formula = cancer_mortality_per_100k ~ annual_pm2.5, data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -147.14  -75.43   36.67   55.08  115.02 
+## -206.55  -34.46    1.63   45.56  154.59 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)   810.26     124.80   6.492 7.42e-06 ***
-## mean_pm2.5    -32.42      21.48  -1.509    0.151    
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)   871.126     65.539  13.292  &lt; 2e-16 ***
+## annual_pm2.5  -27.255      9.245  -2.948  0.00458 ** 
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 85.53 on 16 degrees of freedom
-## Multiple R-squared:  0.1246, Adjusted R-squared:  0.06994 
-## F-statistic: 2.278 on 1 and 16 DF,  p-value: 0.1507</code></pre>
-<pre class="r"><code>lm_pm2.5_cancer_adjusted &lt;-lm(cancer_mortality_per_100k ~ mean_pm2.5+white+income+female+age, data=merge)
+## Residual standard error: 75.55 on 59 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.1284, Adjusted R-squared:  0.1136 
+## F-statistic: 8.691 on 1 and 59 DF,  p-value: 0.004576</code></pre>
+<pre class="r"><code>lm_pm2.5_cancer_adjusted &lt;-lm(cancer_mortality_per_100k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education, data=merge)
 summary(lm_pm2.5_cancer_adjusted)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cancer_mortality_per_100k ~ mean_pm2.5 + white + 
-##     income + female + age, data = merge)
+## lm(formula = cancer_mortality_per_100k ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white + percent_hisp_black + percentage_high_education, 
+##     data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -73.596 -31.255   4.436  27.754  66.331 
+## -81.432 -21.297   0.437  27.794  79.032 
 ## 
 ## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)    
-## (Intercept)  6.193e+01  9.203e+02   0.067 0.947450    
-## mean_pm2.5   6.413e+00  1.483e+01   0.432 0.673116    
-## white        3.756e+02  7.670e+01   4.896 0.000368 ***
-## income      -1.100e-05  8.555e-04  -0.013 0.989957    
-## female       5.928e+02  1.744e+03   0.340 0.739748    
-## age         -2.683e-02  1.532e-01  -0.175 0.863885    
+##                            Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                -287.220    164.037  -1.751  0.08585 .  
+## annual_pm2.5                 13.477      6.228   2.164  0.03507 *  
+## median_age                   12.946      1.772   7.308  1.6e-09 ***
+## percent_high_income        -189.281    116.459  -1.625  0.11015    
+## percent_non_hisp_white      455.710    138.016   3.302  0.00174 ** 
+## percent_non_hisp_black      545.281    262.585   2.077  0.04280 *  
+## percent_hisp_white          956.926    506.330   1.890  0.06435 .  
+## percent_hisp_black        -1486.263   1191.921  -1.247  0.21800    
+## percentage_high_education     1.873     93.448   0.020  0.98408    
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 51.01 on 12 degrees of freedom
-## Multiple R-squared:  0.7664, Adjusted R-squared:  0.6691 
-## F-statistic: 7.875 on 5 and 12 DF,  p-value: 0.001704</code></pre>
+## Residual standard error: 38.32 on 52 degrees of freedom
+##   (1 observation deleted due to missingness)
+## Multiple R-squared:  0.8024, Adjusted R-squared:  0.772 
+## F-statistic: 26.39 on 8 and 52 DF,  p-value: 9.519e-16</code></pre>
 <div id="stepwise-2" class="section level5">
 <h5>stepwise</h5>
 <pre class="r"><code>step(lm_pm2.5_cancer_adjusted, direction = &#39;both&#39;)</code></pre>
-<pre><code>## Start:  AIC=146.26
-## cancer_mortality_per_100k ~ mean_pm2.5 + white + income + female + 
-##     age
+<pre><code>## Start:  AIC=453.06
+## cancer_mortality_per_100k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq   RSS    AIC
-## - income      1         0 31230 144.26
-## - age         1        80 31309 144.30
-## - female      1       301 31530 144.43
-## - mean_pm2.5  1       487 31716 144.54
-## &lt;none&gt;                    31230 146.26
-## - white       1     62393 93623 164.02
+##                             Df Sum of Sq    RSS    AIC
+## - percentage_high_education  1         1  76349 451.06
+## - percent_hisp_black         1      2283  78631 452.86
+## &lt;none&gt;                                    76348 453.06
+## - percent_high_income        1      3878  80227 454.09
+## - percent_hisp_white         1      5244  81593 455.12
+## - percent_non_hisp_black     1      6331  82680 455.92
+## - annual_pm2.5               1      6876  83225 456.32
+## - percent_non_hisp_white     1     16007  92356 462.67
+## - median_age                 1     78403 154752 494.16
 ## 
-## Step:  AIC=144.26
-## cancer_mortality_per_100k ~ mean_pm2.5 + white + female + age
+## Step:  AIC=451.06
+## cancer_mortality_per_100k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black
 ## 
-##              Df Sum of Sq   RSS    AIC
-## - age         1        79 31309 142.30
-## - female      1       300 31530 142.43
-## - mean_pm2.5  1       494 31724 142.54
-## &lt;none&gt;                    31230 144.26
-## + income      1         0 31230 146.26
-## - white       1     62528 93758 162.05
+##                             Df Sum of Sq    RSS    AIC
+## - percent_hisp_black         1      2288  78637 450.86
+## &lt;none&gt;                                    76349 451.06
+## + percentage_high_education  1         1  76348 453.06
+## - percent_hisp_white         1      6192  82541 453.82
+## - percent_non_hisp_black     1      6417  82766 453.99
+## - annual_pm2.5               1      6876  83225 454.32
+## - percent_high_income        1      8327  84677 455.38
+## - percent_non_hisp_white     1     17098  93447 461.39
+## - median_age                 1     87306 163655 495.57
 ## 
-## Step:  AIC=142.3
-## cancer_mortality_per_100k ~ mean_pm2.5 + white + female
+## Step:  AIC=450.86
+## cancer_mortality_per_100k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white
 ## 
-##              Df Sum of Sq   RSS    AIC
-## - female      1       263 31573 140.45
-## - mean_pm2.5  1       442 31752 140.56
-## &lt;none&gt;                    31309 142.30
-## + age         1        79 31230 144.26
-## + income      1         0 31309 144.30
-## - white       1     66189 97499 160.75
-## 
-## Step:  AIC=140.45
-## cancer_mortality_per_100k ~ mean_pm2.5 + white
-## 
-##              Df Sum of Sq    RSS    AIC
-## - mean_pm2.5  1       437  32010 138.70
-## &lt;none&gt;                     31573 140.45
-## + female      1       263  31309 142.30
-## + age         1        42  31530 142.43
-## + income      1         0  31573 142.45
-## - white       1     85467 117040 162.04
-## 
-## Step:  AIC=138.7
-## cancer_mortality_per_100k ~ white
-## 
-##              Df Sum of Sq    RSS    AIC
-## &lt;none&gt;                     32010 138.70
-## + mean_pm2.5  1       437  31573 140.45
-## + female      1       258  31752 140.56
-## + income      1        11  31999 140.70
-## + age         1         9  32001 140.70
-## - white       1    101696 133706 162.43</code></pre>
+##                             Df Sum of Sq    RSS    AIC
+## &lt;none&gt;                                    78637 450.86
+## + percent_hisp_black         1      2288  76349 451.06
+## + percentage_high_education  1         5  78631 452.86
+## - percent_hisp_white         1      5383  84020 452.90
+## - percent_non_hisp_black     1      5813  84450 453.22
+## - percent_high_income        1      6141  84778 453.45
+## - annual_pm2.5               1      7045  85682 454.10
+## - percent_non_hisp_white     1     23084 101721 464.57
+## - median_age                 1     85923 164559 493.91</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cancer_mortality_per_100k ~ white, data = merge)
+## lm(formula = cancer_mortality_per_100k ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white, data = merge)
 ## 
 ## Coefficients:
-## (Intercept)        white  
-##       415.3        347.7</code></pre>
+##            (Intercept)            annual_pm2.5              median_age  
+##                -343.39                   13.64                   12.81  
+##    percent_high_income  percent_non_hisp_white  percent_non_hisp_black  
+##                -145.86                  504.63                  516.43  
+##     percent_hisp_white  
+##                 881.71</code></pre>
 </div>
 </div>
 <div id="regression-pm2.5-and-asthma-hospitalization" class="section level4">
 <h4>regression pm2.5 and asthma hospitalization</h4>
-<pre class="r"><code>lm_pm2.5_asthma &lt;- lm(asthma_hosp_rate_per_10k ~ mean_pm2.5 , data=merge)
+<pre class="r"><code>lm_pm2.5_asthma &lt;- lm(asthma_hosp_rate_per_10k ~ annual_pm2.5 , data=merge)
 summary(lm_pm2.5_asthma)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = asthma_hosp_rate_per_10k ~ mean_pm2.5, data = merge)
+## lm(formula = asthma_hosp_rate_per_10k ~ annual_pm2.5, data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -6.3841 -2.7487 -0.5746  0.1937 18.2185 
+## -3.3861 -1.4748 -0.7693  0.6846 21.8951 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)
-## (Intercept)  -10.769     10.561  -1.020    0.324
-## mean_pm2.5     3.093      1.782   1.736    0.103
-## 
-## Residual standard error: 5.473 on 15 degrees of freedom
-##   (1 observation deleted due to missingness)
-## Multiple R-squared:  0.1673, Adjusted R-squared:  0.1118 
-## F-statistic: 3.013 on 1 and 15 DF,  p-value: 0.1031</code></pre>
-<pre class="r"><code>lm_pm2.5_asthma_adjusted &lt;-lm(asthma_hosp_rate_per_10k ~ mean_pm2.5+white+income+female+age, data=merge)
-summary(lm_pm2.5_asthma_adjusted)</code></pre>
-<pre><code>## 
-## Call:
-## lm(formula = asthma_hosp_rate_per_10k ~ mean_pm2.5 + white + 
-##     income + female + age, data = merge)
-## 
-## Residuals:
-##     Min      1Q  Median      3Q     Max 
-## -4.4755 -0.7068  0.1948  0.6390  4.5627 
-## 
-## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)  
-## (Intercept) -1.990e+02  7.385e+01  -2.695   0.0209 *
-## mean_pm2.5  -4.875e-01  1.111e+00  -0.439   0.6693  
-## white       -9.973e+00  5.066e+00  -1.969   0.0747 .
-## income      -1.240e-04  4.418e-05  -2.807   0.0171 *
-## female       4.345e+02  1.482e+02   2.931   0.0137 *
-## age         -5.398e-03  8.038e-03  -0.672   0.5158  
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    -7.630      3.376  -2.260 0.027646 *  
+## annual_pm2.5    1.703      0.472   3.608 0.000651 ***
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 2.613 on 11 degrees of freedom
-##   (1 observation deleted due to missingness)
-## Multiple R-squared:  0.8608, Adjusted R-squared:  0.7976 
-## F-statistic: 13.61 on 5 and 11 DF,  p-value: 0.0002126</code></pre>
+## Residual standard error: 3.415 on 57 degrees of freedom
+##   (3 observations deleted due to missingness)
+## Multiple R-squared:  0.1859, Adjusted R-squared:  0.1717 
+## F-statistic: 13.02 on 1 and 57 DF,  p-value: 0.0006507</code></pre>
+<pre class="r"><code>lm_pm2.5_asthma_adjusted &lt;-lm(asthma_hosp_rate_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education, data=merge)
+summary(lm_pm2.5_asthma_adjusted)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white + percent_hisp_black + percentage_high_education, 
+##     data = merge)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -1.66485 -0.68591 -0.08339  0.68439  2.86728 
+## 
+## Coefficients:
+##                            Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)                -1.82264    4.33414  -0.421   0.6759    
+## annual_pm2.5               -0.11218    0.19772  -0.567   0.5730    
+## median_age                  0.06819    0.05034   1.355   0.1817    
+## percent_high_income         3.28855    3.07004   1.071   0.2892    
+## percent_non_hisp_white      1.09540    3.66761   0.299   0.7664    
+## percent_non_hisp_black     16.97210    6.92522   2.451   0.0178 *  
+## percent_hisp_white          5.70145   13.43084   0.425   0.6730    
+## percent_hisp_black        368.32744   31.51227  11.688 6.54e-16 ***
+## percentage_high_education  -3.63663    2.51282  -1.447   0.1541    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 1.01 on 50 degrees of freedom
+##   (3 observations deleted due to missingness)
+## Multiple R-squared:  0.9376, Adjusted R-squared:  0.9276 
+## F-statistic: 93.87 on 8 and 50 DF,  p-value: &lt; 2.2e-16</code></pre>
 <div id="stepwise-3" class="section level5">
 <h5>stepwise</h5>
 <pre class="r"><code>step(lm_pm2.5_asthma_adjusted, direction = &#39;both&#39;)</code></pre>
-<pre><code>## Start:  AIC=37.25
-## asthma_hosp_rate_per_10k ~ mean_pm2.5 + white + income + female + 
-##     age
+<pre><code>## Start:  AIC=9.37
+## asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq     RSS    AIC
-## - mean_pm2.5  1     1.314  76.398 35.547
-## - age         1     3.078  78.162 35.935
-## &lt;none&gt;                     75.084 37.252
-## - white       1    26.454 101.538 40.383
-## - income      1    53.794 128.878 44.436
-## - female      1    58.652 133.736 45.065
+##                             Df Sum of Sq     RSS    AIC
+## - percent_non_hisp_white     1     0.091  51.065  7.479
+## - percent_hisp_white         1     0.184  51.158  7.586
+## - annual_pm2.5               1     0.328  51.303  7.752
+## - percent_high_income        1     1.170  52.144  8.712
+## &lt;none&gt;                                    50.975  9.374
+## - median_age                 1     1.871  52.845  9.500
+## - percentage_high_education  1     2.135  53.110  9.795
+## - percent_non_hisp_black     1     6.123  57.098 14.067
+## - percent_hisp_black         1   139.281 190.256 85.079
 ## 
-## Step:  AIC=35.55
-## asthma_hosp_rate_per_10k ~ white + income + female + age
+## Step:  AIC=7.48
+## asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_black + percent_hisp_white + percent_hisp_black + 
+##     percentage_high_education
 ## 
-##              Df Sum of Sq     RSS    AIC
-## - age         1     2.922  79.320 34.185
-## &lt;none&gt;                     76.398 35.547
-## + mean_pm2.5  1     1.314  75.084 37.252
-## - white       1    31.250 107.647 39.376
-## - income      1    53.958 130.355 42.630
-## - female      1    72.492 148.890 44.890
+##                             Df Sum of Sq     RSS    AIC
+## - percent_hisp_white         1     0.093  51.158  5.586
+## - annual_pm2.5               1     0.475  51.541  6.025
+## - percent_high_income        1     1.348  52.414  7.016
+## &lt;none&gt;                                    51.065  7.479
+## - median_age                 1     1.942  53.008  7.681
+## - percentage_high_education  1     2.467  53.532  8.262
+## + percent_non_hisp_white     1     0.091  50.975  9.374
+## - percent_non_hisp_black     1    13.294  64.359 19.130
+## - percent_hisp_black         1   147.232 198.298 85.522
 ## 
-## Step:  AIC=34.18
-## asthma_hosp_rate_per_10k ~ white + income + female
+## Step:  AIC=5.59
+## asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_black + percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq     RSS    AIC
-## &lt;none&gt;                     79.320 34.185
-## + age         1     2.922  76.398 35.547
-## + mean_pm2.5  1     1.158  78.162 35.935
-## - white       1    43.007 122.327 39.549
-## - income      1    51.833 131.153 40.734
-## - female      1    70.147 149.467 42.956</code></pre>
+##                             Df Sum of Sq     RSS    AIC
+## - annual_pm2.5               1     0.463  51.622  4.118
+## &lt;none&gt;                                    51.158  5.586
+## - median_age                 1     1.858  53.016  5.691
+## - percent_high_income        1     2.955  54.113  6.899
+## - percentage_high_education  1     3.057  54.215  7.010
+## + percent_hisp_white         1     0.093  51.065  7.479
+## + percent_non_hisp_white     1     0.000  51.158  7.586
+## - percent_non_hisp_black     1    14.017  65.176 17.873
+## - percent_hisp_black         1   198.285 249.444 97.060
+## 
+## Step:  AIC=4.12
+## asthma_hosp_rate_per_10k ~ median_age + percent_high_income + 
+##     percent_non_hisp_black + percent_hisp_black + percentage_high_education
+## 
+##                             Df Sum of Sq     RSS    AIC
+## - median_age                 1     1.616  53.238  3.936
+## &lt;none&gt;                                    51.622  4.118
+## - percent_high_income        1     2.616  54.238  5.035
+## + annual_pm2.5               1     0.463  51.158  5.586
+## + percent_hisp_white         1     0.081  51.541  6.025
+## + percent_non_hisp_white     1     0.022  51.600  6.093
+## - percentage_high_education  1     3.605  55.226  6.100
+## - percent_non_hisp_black     1    13.597  65.219 15.913
+## - percent_hisp_black         1   199.425 251.047 95.438
+## 
+## Step:  AIC=3.94
+## asthma_hosp_rate_per_10k ~ percent_high_income + percent_non_hisp_black + 
+##     percent_hisp_black + percentage_high_education
+## 
+##                             Df Sum of Sq     RSS    AIC
+## &lt;none&gt;                                    53.238  3.936
+## + median_age                 1     1.616  51.622  4.118
+## + annual_pm2.5               1     0.221  53.016  5.691
+## + percent_non_hisp_white     1     0.092  53.146  5.835
+## + percent_hisp_white         1     0.008  53.229  5.927
+## - percent_high_income        1     4.568  57.805  6.793
+## - percentage_high_education  1     6.197  59.434  8.433
+## - percent_non_hisp_black     1    12.074  65.311 13.996
+## - percent_hisp_black         1   198.347 251.584 93.564</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = asthma_hosp_rate_per_10k ~ white + income + female, 
+## lm(formula = asthma_hosp_rate_per_10k ~ percent_high_income + 
+##     percent_non_hisp_black + percent_hisp_black + percentage_high_education, 
 ##     data = merge)
 ## 
 ## Coefficients:
-## (Intercept)        white       income       female  
-##  -1.710e+02   -1.160e+01   -1.210e-04    3.747e+02</code></pre>
+##               (Intercept)        percent_high_income  
+##                     1.362                      4.653  
+##    percent_non_hisp_black         percent_hisp_black  
+##                    13.518                    366.672  
+## percentage_high_education  
+##                    -5.306</code></pre>
 </div>
 </div>
 <div id="regression-pm2.5-and-cardiovascular-disease-hospitalization" class="section level4">
 <h4>regression pm2.5 and cardiovascular disease hospitalization</h4>
-<pre class="r"><code>lm_pm2.5_cardio &lt;- lm(cardio_hosp_rate_per_10k ~ mean_pm2.5 , data=merge)
+<pre class="r"><code>lm_pm2.5_cardio &lt;- lm(cardio_hosp_rate_per_10k ~ annual_pm2.5 , data=merge)
 summary(lm_pm2.5_cardio)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cardio_hosp_rate_per_10k ~ mean_pm2.5, data = merge)
+## lm(formula = cardio_hosp_rate_per_10k ~ annual_pm2.5, data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -48.225  -9.314  -0.505  13.640  43.830 
+## -69.983 -11.516   4.183  18.558  49.049 
 ## 
 ## Coefficients:
-##             Estimate Std. Error t value Pr(&gt;|t|)  
-## (Intercept)   92.661     35.952   2.577   0.0203 *
-## mean_pm2.5     8.691      6.187   1.405   0.1792  
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  144.4652    22.3939   6.451 2.14e-08 ***
+## annual_pm2.5   0.9545     3.1662   0.301    0.764    
 ## ---
 ## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 24.64 on 16 degrees of freedom
-## Multiple R-squared:  0.1098, Adjusted R-squared:  0.05415 
-## F-statistic: 1.973 on 1 and 16 DF,  p-value: 0.1792</code></pre>
-<pre class="r"><code>lm_pm2.5_cardio_adjusted &lt;-lm(cardio_hosp_rate_per_10k ~ mean_pm2.5+white+income+female+age, data=merge)
+## Residual standard error: 26.07 on 60 degrees of freedom
+## Multiple R-squared:  0.001512,   Adjusted R-squared:  -0.01513 
+## F-statistic: 0.09088 on 1 and 60 DF,  p-value: 0.7641</code></pre>
+<pre class="r"><code>lm_pm2.5_cardio_adjusted &lt;-lm(cardio_hosp_rate_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education, data=merge)
 summary(lm_pm2.5_cardio_adjusted)</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cardio_hosp_rate_per_10k ~ mean_pm2.5 + white + 
-##     income + female + age, data = merge)
+## lm(formula = cardio_hosp_rate_per_10k ~ annual_pm2.5 + median_age + 
+##     percent_high_income + percent_non_hisp_white + percent_non_hisp_black + 
+##     percent_hisp_white + percent_hisp_black + percentage_high_education, 
+##     data = merge)
 ## 
 ## Residuals:
 ##     Min      1Q  Median      3Q     Max 
-## -48.694 -11.110  -1.012  12.858  41.458 
+## -72.419  -9.850   0.688  13.532  37.307 
 ## 
 ## Coefficients:
-##               Estimate Std. Error t value Pr(&gt;|t|)
-## (Intercept)  3.569e+02  4.949e+02   0.721    0.485
-## mean_pm2.5   7.217e+00  7.976e+00   0.905    0.383
-## white       -3.098e+01  4.125e+01  -0.751    0.467
-## income      -2.767e-04  4.601e-04  -0.601    0.559
-## female      -4.429e+02  9.378e+02  -0.472    0.645
-## age          1.377e-02  8.240e-02   0.167    0.870
+##                            Estimate Std. Error t value Pr(&gt;|t|)  
+## (Intercept)                -48.3178    98.5646  -0.490   0.6260  
+## annual_pm2.5                 7.3850     3.7412   1.974   0.0536 .
+## median_age                   1.9855     0.9464   2.098   0.0407 *
+## percent_high_income        -53.6921    70.2064  -0.765   0.4478  
+## percent_non_hisp_white     110.9831    82.4658   1.346   0.1841  
+## percent_non_hisp_black     258.2772   158.1793   1.633   0.1084  
+## percent_hisp_white         550.4988   303.6862   1.813   0.0755 .
+## percent_hisp_black        -439.0701   718.5606  -0.611   0.5438  
+## percentage_high_education -100.1897    56.3367  -1.778   0.0811 .
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
 ## 
-## Residual standard error: 27.44 on 12 degrees of freedom
-## Multiple R-squared:  0.172,  Adjusted R-squared:  -0.1729 
-## F-statistic: 0.4987 on 5 and 12 DF,  p-value: 0.7717</code></pre>
+## Residual standard error: 23.1 on 53 degrees of freedom
+## Multiple R-squared:  0.3073, Adjusted R-squared:  0.2028 
+## F-statistic:  2.94 on 8 and 53 DF,  p-value: 0.008558</code></pre>
 <div id="stepwise-4" class="section level5">
 <h5>stepwise</h5>
 <pre class="r"><code>step(lm_pm2.5_cardio_adjusted, direction = &#39;both&#39;)</code></pre>
-<pre><code>## Start:  AIC=123.93
-## cardio_hosp_rate_per_10k ~ mean_pm2.5 + white + income + female + 
-##     age
+<pre><code>## Start:  AIC=397.62
+## cardio_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percent_hisp_black + percentage_high_education
 ## 
-##              Df Sum of Sq    RSS    AIC
-## - age         1     21.02 9054.5 121.97
-## - female      1    167.88 9201.3 122.26
-## - income      1    272.21 9305.7 122.46
-## - white       1    424.58 9458.0 122.76
-## - mean_pm2.5  1    616.32 9649.8 123.12
-## &lt;none&gt;                    9033.4 123.93
+##                             Df Sum of Sq   RSS    AIC
+## - percent_hisp_black         1    199.26 28484 396.06
+## - percent_high_income        1    312.14 28597 396.30
+## &lt;none&gt;                                   28285 397.62
+## - percent_non_hisp_white     1    966.59 29252 397.71
+## - percent_non_hisp_black     1   1422.82 29708 398.67
+## - percentage_high_education  1   1687.88 29973 399.22
+## - percent_hisp_white         1   1753.64 30039 399.35
+## - annual_pm2.5               1   2079.54 30364 400.02
+## - median_age                 1   2348.97 30634 400.57
 ## 
-## Step:  AIC=121.97
-## cardio_hosp_rate_per_10k ~ mean_pm2.5 + white + income + female
+## Step:  AIC=396.06
+## cardio_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percentage_high_education
 ## 
-##              Df Sum of Sq    RSS    AIC
-## - female      1    154.35 9208.8 120.28
-## - income      1    287.55 9342.0 120.53
-## - white       1    404.42 9458.9 120.76
-## - mean_pm2.5  1    678.38 9732.9 121.27
-## &lt;none&gt;                    9054.5 121.97
-## + age         1     21.02 9033.4 123.93
+##                             Df Sum of Sq   RSS    AIC
+## - percent_high_income        1    188.96 28673 394.47
+## &lt;none&gt;                                   28484 396.06
+## - percent_non_hisp_white     1   1317.61 29802 396.86
+## - percent_non_hisp_black     1   1336.01 29820 396.90
+## - percent_hisp_white         1   1624.04 30108 397.50
+## + percent_hisp_black         1    199.26 28285 397.62
+## - percentage_high_education  1   1770.22 30254 397.80
+## - annual_pm2.5               1   2104.94 30589 398.48
+## - median_age                 1   2253.30 30737 398.78
 ## 
-## Step:  AIC=120.28
-## cardio_hosp_rate_per_10k ~ mean_pm2.5 + white + income
+## Step:  AIC=394.47
+## cardio_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_non_hisp_white + 
+##     percent_non_hisp_black + percent_hisp_white + percentage_high_education
 ## 
-##              Df Sum of Sq    RSS    AIC
-## - white       1    255.10 9463.9 118.77
-## - income      1    295.78 9504.6 118.84
-## - mean_pm2.5  1    684.92 9893.7 119.57
-## &lt;none&gt;                    9208.8 120.28
-## + female      1    154.35 9054.5 121.97
-## + age         1      7.50 9201.3 122.26
-## 
-## Step:  AIC=118.77
-## cardio_hosp_rate_per_10k ~ mean_pm2.5 + income
-## 
-##              Df Sum of Sq     RSS    AIC
-## - income      1    248.87  9712.8 117.23
-## &lt;none&gt;                     9463.9 118.77
-## - mean_pm2.5  1   1376.04 10840.0 119.21
-## + white       1    255.10  9208.8 120.28
-## + female      1      5.03  9458.9 120.76
-## + age         1      0.87  9463.0 120.77
-## 
-## Step:  AIC=117.23
-## cardio_hosp_rate_per_10k ~ mean_pm2.5
-## 
-##              Df Sum of Sq     RSS    AIC
-## &lt;none&gt;                     9712.8 117.23
-## - mean_pm2.5  1   1197.83 10910.6 117.33
-## + income      1    248.87  9463.9 118.77
-## + white       1    208.19  9504.6 118.84
-## + female      1     10.68  9702.1 119.22
-## + age         1      0.45  9712.3 119.23</code></pre>
+##                             Df Sum of Sq   RSS    AIC
+## &lt;none&gt;                                   28673 394.47
+## - percent_non_hisp_white     1    1135.2 29808 394.88
+## - percent_non_hisp_black     1    1243.3 29916 395.10
+## - percent_hisp_white         1    1543.5 30217 395.72
+## + percent_high_income        1     189.0 28484 396.06
+## + percent_hisp_black         1      76.1 28597 396.30
+## - annual_pm2.5               1    1925.4 30599 396.50
+## - median_age                 1    2077.8 30751 396.81
+## - percentage_high_education  1    6538.2 35211 405.20</code></pre>
 <pre><code>## 
 ## Call:
-## lm(formula = cardio_hosp_rate_per_10k ~ mean_pm2.5, data = merge)
+## lm(formula = cardio_hosp_rate_per_10k ~ annual_pm2.5 + median_age + 
+##     percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + 
+##     percentage_high_education, data = merge)
 ## 
 ## Coefficients:
-## (Intercept)   mean_pm2.5  
-##      92.661        8.691</code></pre>
+##               (Intercept)               annual_pm2.5  
+##                   -46.304                      6.907  
+##                median_age     percent_non_hisp_white  
+##                     1.735                    109.968  
+##    percent_non_hisp_black         percent_hisp_white  
+##                   238.914                    425.102  
+## percentage_high_education  
+##                  -127.829</code></pre>
 </div>
 </div>
 
