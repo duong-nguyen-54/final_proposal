@@ -63,8 +63,9 @@ Week 4 (11/30 - 12/06):
 
 Develop visualizations (heat maps, scatter plots, etc.) and address coding challenges.
 
+Commit trial and error no.2
+
 Week 5 (12/07 - 12/10):
 
 Final analysis, compile report, and submit (submit by 12/10).
 
-Commit trial and error. 
