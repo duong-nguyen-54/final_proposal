@@ -63,15 +63,21 @@ Developing interactive visualizations for user engagement.
 Week 1 (11/09 - 11/15):
 
 Setup GitHub repo, team roles, and write project proposal (submit by
-11/15). Week 2 (11/16 - 11/22):
+11/15).
 
-Data acquisition and cleaning; start descriptive statistics. Week 3
-(11/23 - 11/29):
+Week 2 (11/16 - 11/22):
 
-Perform spatial analysis and initial regression modeling. Week 4
-(11/30 - 12/06):
+Data acquisition and cleaning; start descriptive statistics.
+
+Week 3 (11/23 - 11/29):
+
+Perform spatial analysis and initial regression modeling.
+
+Week 4 (11/30 - 12/06):
 
 Develop visualizations (heat maps, scatter plots, etc.) and address
-coding challenges. Week 5 (12/07 - 12/10):
+coding challenges.
+
+Week 5 (12/07 - 12/10):
 
 Final analysis, compile report, and submit (submit by 12/10).
