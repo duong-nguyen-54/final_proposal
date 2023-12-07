@@ -15,11 +15,28 @@ library(readxl)
 library(rvest)
 library(plotly)
 library(knitr)
-library(xtable)
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
 ```
+
+# Motivation
+
+_Provide an overview of the project goals and motivation_
+
+The motivation for a project exploring the correlation between low birth weight, premature birth rate, cancer mortality rate, cardiovascular disease hospitalization rate, asthma hospitalization rate and PM2.5 concentration, as well as socioeconomic, racial, education, and gender factors across the 62 counties of New York State, stems from a compelling public health imperative. All the outcomes of interest are critical indicators of population health. By examining the impact of fine particulate pollution, this project aims to uncover environmental health disparities that disproportionately affect under-served communities. It seeks to inform public health policy by highlighting the need for targeted interventions that could mitigate the adverse effects of air pollution on vulnerable populations, including pregnant women and newborns. The analysis of socioeconomic and racial factors will offer insights into the complex interplay between environment and social determinants of health, potentially guiding urban planning and healthcare resource allocation. Furthermore, by considering gender-specific vulnerabilities, the project aims to provide a comprehensive overview of the risk landscape, fostering community awareness and prompting action to improve air quality and health equity in one of the most densely populated urban areas in the world.
+
+# Related work: KEVIN
+
+_Anything that inspired you, such as a paper, a web site, or something we discussed in class._
+
+# Initial questions: KEVIN
+
+_What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?_
+
+# Data
+
+_Source, scraping method, cleaning, etc._
 
 #### Data Import
 ```{r}
@@ -292,7 +309,9 @@ write.csv(map, "NY_map.csv", row.names = FALSE)
 
 ```
 
-#### Exploratory Analysis
+# Exploratory Analysis
+
+_Visualizations, summaries, and exploratory statistical analyses. Justify the steps you took, and show any major changes to your ideas._
 
 ###### Percentage of High Income
 ```{r}
@@ -425,7 +444,9 @@ merge %>%
 ```
 
 
-#### Regression Model 
+# Additional analysis
+
+_If you undertake formal statistical analyses, describe these in detail_
 
 ##### Linear regression pm2.5 concentration and percentage of low birth weight  
 
@@ -524,5 +545,10 @@ summary (lm_pm2.5_cardio_adjusted_best)%>%
 #### All models together 
 ```{r}
 tab_model(lm_pm2.5_birthweight_adjusted_best,lm_pm2.5_premature_adjusted_best,lm_pm2.5_cancer_adjusted_best,lm_pm2.5_asthma_adjusted_best,lm_pm2.5_cardio_adjusted )
-
 ```
+
+# Discussion: KEVIN
+
+_What were your findings? Are they what you expect? What insights into the data can you make?_
+
+
