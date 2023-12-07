@@ -521,7 +521,7 @@ summary (lm_pm2.5_cardio_adjusted_best)%>%
   tab_model()
 ```
 
-#### All model together 
+#### All models together 
 ```{r}
 tab_model(lm_pm2.5_birthweight_adjusted_best,lm_pm2.5_premature_adjusted_best,lm_pm2.5_cancer_adjusted_best,lm_pm2.5_asthma_adjusted_best,lm_pm2.5_cardio_adjusted )
 
