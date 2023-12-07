@@ -59,11 +59,9 @@ Week 3 (11/23 - 11/29):
 
 Perform spatial analysis and initial regression modeling.
 
-Week 4 (11/30 - 12/06):
+Week 4 (11/30 - 12/06/2023):
 
 Develop visualizations (heat maps, scatter plots, etc.) and address coding challenges.
-
-Commit trial and error no.2
 
 Week 5 (12/07 - 12/10):
 
