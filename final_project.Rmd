@@ -448,6 +448,21 @@ merge %>%
 
 _If you undertake formal statistical analyses, describe these in detail_
 
+After cleaning the data, we then look at the effect that the annual concentration of pm 2.5 separately has on multiple outcomes among 62 counties in New York, including low birth weight rate, premature birth rate, cancer mortality rate, asthma-related hospitalization rate, and cardiovascular-disease-related hospitalization rate. 
+
+Since all of the outcomes are measured as rates (i.e., continuous), we use linear regression models to assess the effect of annual concentration of pm 2.5 on the outcomes of interests, adjusting for age, sex, ethnicity, education, income. In our models: 
+
+- Age is reported as a continuous variable that reflects the median age of each county.
+
+- Sex is reported as a continuous variable that reflects the percentage of male in each county. The variable that reflects the percentage of female in each county is not included in our model to avoid perfect multicollinearity.
+
+- Ethnicity is reported as a continuous variable that reflects the percentage of different ethnicity groups in each county, including Hispanic-Black, Hispanic-White, non-Hispanic-Black, non-Hispanic-White, and Others (if Asian, Native American, or belong to two or more race). The variable that reflects the percentage of people who belong to the category Others is not included in our model to avoid perfect multicollinearity.
+
+- Education is reported as a continuous variable that reflects the percentage of people who have obtained one or more higher education degrees in each county.
+
+- Income is reported as a continuous variable that reflects the percentage of household of each county that have annual income exceeding $75,000.
+
+
 ##### Linear regression pm2.5 concentration and percentage of low birth weight  
 
 ```{r}
