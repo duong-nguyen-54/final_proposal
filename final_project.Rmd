@@ -498,6 +498,8 @@ On average, for every unit increase of median age (1 year), the expected low bir
 
 On average, for every unit increase in the percentage of non-Hispanic-Black, the expected low birth weight rate of the county increases by 8.05%. Since the p-value is smaller than 0.05, we have sufficient evidence to claim that the beta coefficient for median age is significantly different than 0.
 
+The adjusted R-squared of 0.249 implies that 24.9% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
+
 #### Premature Birth Weight Rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression 
@@ -515,6 +517,20 @@ summary(lm_pm2.5_premature_adjusted_best)%>%
   tab_model()
 ```
 
+_Interpretation_
+
+The best model that was outputted by the stepwise regression is 
+
+$ \text{premature birth weight} = 4.88 + 0.08(\text{median age}) + 8.03 (\text{percent_non_hisp_black})$
+
+On average, for counties whose median age is 0 and has zero percent of non-Hispanic-Black, the expected low birth weight rate is 4.88% (no practical meaning). Since the p-value is smaller than 0.05, we have sufficient evidence to claim that the intercept is significantly different than 0.
+
+On average, for every unit increase of median age (1 year), the expected low birth weight rate of the county decreases by 0.11%. However, since the p-value is larger than 0.05, we do not have sufficient evidence to claim that the beta coefficient for median age is significantly different than 0.
+
+On average, for every unit increase in the percentage of non-Hispanic-Black, the expected low birth weight rate of the county increases by 8.03%. Since the p-value is smaller than 0.05, we have sufficient evidence to claim that the beta coefficient for median age is significantly different than 0.
+
+The adjusted R-squared of 0.105 implies that 10.5% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
+
 #### Cancer Mortality Rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression 
@@ -531,6 +547,21 @@ lm_pm2.5_cancer_adjusted_best <- lm(cancer_mortality_per_100k ~ annual_pm2.5 + m
 summary (lm_pm2.5_cancer_adjusted_best)%>%
   tab_model()
 ```
+
+_Interpretation_
+
+The best model that was outputted by the stepwise regression is 
+
+$ \text{cancer mortality rate} = -1.85 + 13.27(\text{annual pm 2.5}) + 13.14(\text{median age}) - 213.49(\text{percent high income}) + 464.03(\text{percent non hisp white}) + 536.28(\text{percent non hisp black}) +  1023.82(\text{percent hisp white}) - 1787.43(\text{percent hisp black}) - 574.15(\text{percent male})$
+
+On average, for counties whose annual pm 2.5 concentration is 0, median age is 0, has zero percent of non-Hispanic-Black, has zero percent of non-Hispanic-White, has zero percent of Hispanic-Black, has zero percent of Hispanic-White, has zero percent of male, the expected low birth weight rate is -1.85% (no practical meaning). However, since the p-value is larger than 0.05, we do not have sufficient evidence to claim that the intercept is significantly different than 0.
+
+
+On average, for every unit increase of median age (1 year), the expected low birth weight rate of the county decreases by 0.11%. However, since the p-value is larger than 0.05, we do not have sufficient evidence to claim that the beta coefficient for median age is significantly different than 0.
+
+On average, for every unit increase in the percentage of non-Hispanic-Black, the expected low birth weight rate of the county increases by 8.03%. Since the p-value is smaller than 0.05, we have sufficient evidence to claim that the beta coefficient for median age is significantly different than 0.
+
+The adjusted R-squared of 0.105 implies that 10.5% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
 
 ##### Asthma Hospitalization rate vs. Annual pm 2.5 Concentration
 
