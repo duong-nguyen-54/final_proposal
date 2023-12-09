@@ -75,9 +75,10 @@ _Provide an overview of the project goals and motivation_
 
 _Anything that inspired you, such as a paper, a web site, or something we discussed in class._
 
-# Initial Questions: KEVIN
+# Initial Question
 
-_What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?_
+We aim to assess the impact of PM2.5 concentration on various health outcomes across New York state, encompassing neonatal health to the well-being of mature individuals. Our investigation involves not only preliminary data analysis but also the implementation of regression models, accounting for demographic characteristics. Through this comprehensive approach, we seek to understand the individual contributions of different variables to health outcomes. Ultimately, our goal is to identify the most effective model for predicting these health outcomes, with the potential to provide valuable insights for public health benefits.
+
 
 # Data
 
@@ -98,7 +99,12 @@ health <- read_excel("chir_current_data.xlsx")
 uscounties <- read_csv("uscounties.csv") #Simplemaps.com
 ```
 
+9 data files are obtained from publicly available sources online. These will be imported, wrangled properly, and merged to create a complete data for further analysis.
+
 ## Data Wrangling {.tabset .tabset-fade}
+
+Click `show` on the right to view the code chunk for data importing.
+
 
 ### PM2.5 Dataset  
 ```{r warning=FALSE}
@@ -106,12 +112,18 @@ pm2_5 <- pm2_5 %>%
   janitor::clean_names()%>%
   select (county,value) %>%
   rename (annual_pm2.5 = "value")
+
+pm2_5 %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 The dataset is obtained from EPH Tracking Website from CDC (https://ephtracking.cdc.gov/DataExplorer/). This has `r nrow(pm2_5)` rows and `r ncol(pm2_5)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
   - `annual_pm2.5`: annual estimated PM2.5 concentration at each county (ug/m^3)
 
 ### Demographic Dataset {.tabset .tabset-fade}
+
 The following set of demographic datasets is obtained from Census Reporter webpage (https://censusreporter.org/).
 
 #### Education Attainment
@@ -125,6 +137,11 @@ edu <- edu_NY %>%
   mutate(county = str_replace (county, "St.", "St")) %>%
   mutate(county = str_replace (county, "Stuben", "Steuben"))%>%
   select(county,percentage_high_education)
+
+edu %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```  
 This has `r nrow(edu)` rows and `r ncol(edu)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
@@ -191,6 +208,11 @@ race_merge <- race_non_hisp_white %>%
 
 race_merge <- race_merge %>% 
   mutate (percent_other = 1 - percent_non_hisp_white - percent_non_hisp_black - percent_hisp_white - percent_hisp_black)
+
+race_merge %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 This has `r nrow(race_merge)` rows and `r ncol(race_merge)` columns of data. In which, 6 variables are:  
   - `county`: NY county name   
@@ -215,6 +237,11 @@ income <- HHincome_NY %>%
   select (county,percent_high_income ) %>%
   mutate(county = str_replace (county, "_", " ")) %>%
   mutate_at(vars(county), str_to_title)
+
+race_merge %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 This has `r nrow(income)` rows and `r ncol(income)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
@@ -233,6 +260,11 @@ age <- Age_NY %>%
   select (county,median_age ) %>%
   mutate(county = str_replace (county, "_", " ")) %>%
   mutate_at(vars(county), str_to_title)
+
+age %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 This has `r nrow(age)` rows and `r ncol(age)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
@@ -252,6 +284,11 @@ sex <- Sex_NY %>%
   select (county,percent_male ) %>%
   mutate(county = str_replace (county, "_", " ")) %>%
   mutate_at(vars(county), str_to_title)
+
+sex%>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 This has `r nrow(sex)` rows and `r ncol(sex)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
@@ -263,6 +300,11 @@ lowbirthweight <- lowbirthweight %>%
   janitor::clean_names()%>%
   select (region_county, percentage)%>%
   rename (county = "region_county", percent_lowbirthweight = "percentage") 
+
+lowbirthweight %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 This has `r nrow(lowbirthweight)` rows and `r ncol(lowbirthweight)` columns of data. In which, 2 variables are:  
   - `county`: NY county name   
@@ -305,7 +347,15 @@ maternal <- health %>%
   filter (indicator_title == "Percentage of premature births with <37 weeks gestation") %>% 
   select (-c(indicator_title, topic_area, measurement)) %>% 
   rename (premature_percentage = "rate_percent")
+health_merge <- maternal %>% 
+  inner_join(cancer, by = "county") %>%
+  inner_join(resp, by = "county") %>% 
+  inner_join(cardio, by = "county") 
 
+health_merge %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
 They are:   
   - `cancer_mortality_per_10k`: percentage of cancer mortality per 100 thousands people in each NY county (Cancer Indicator)    
@@ -314,12 +364,9 @@ They are:
   - `premature_percentage`: percentage of children being born prematurely (<37  gestational weeks) in each NY county
 
 ### Merge dataset
-Here we perform `inner_join()` to create 2 bigger datasets `health_merge` and `demographic_merge`. Then, we join them with our `lowbirthweight` & `pm2_5` tp make a finalized data frame called `merge`. And, we will use this for regression model. 
+Here we perform `inner_join()` to create 1 bigger dataset called `demographic_merge`. Then, we join them with our `lowbirthweight` & `pm2_5` to make a finalized data frame called `merge`. And, we will use this for regression model. 
+
 ```{r warning=FALSE}
-health_merge <- maternal %>% 
-  inner_join(cancer, by = "county") %>%
-  inner_join(resp, by = "county") %>% 
-  inner_join(cardio, by = "county") 
 
 demographic_merge <- age %>%
   inner_join(sex,  by = "county") %>%
@@ -341,7 +388,15 @@ merge <- merge %>%
   mutate(premature_percentage = as.numeric(premature_percentage))%>%
   mutate(cancer_mortality_per_10k = as.numeric(cancer_mortality_per_10k))
 
+merge %>% 
+  knitr::kable(digits = 3) %>% 
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"), font_size = 12) %>% 
+  kableExtra::scroll_box(width = "100%", height = "300px")
 ```
+
+This `merge` dataset is comprised of `r nrow(merge)` rows and `r ncol(merge)` columns of data, with first column being the name of the `county`, and other 15 beings all continuous variables of identified indicators of the whole 62 counties of NY state.  
+
+
 
 ### Making Map File
 ```{r warning=FALSE}
@@ -355,16 +410,18 @@ map <- merge %>%
 write.csv(map, "NY_map.csv", row.names = FALSE)
 
 ```
-This file is specifically made for the purpose of making map (in Shiny App).
+This file is specifically made for the purpose of making map (in Shiny App). We obtained latitude and longitude data of all NY counties from SimpleMaps Database (https://simplemaps.com/data/us-counties).
 
 
 # EDA {.tabset .tabset-fade}
 
 _Visualizations, summaries, and exploratory statistical analyses. Justify the steps you took, and show any major changes to your ideas._
 
-I CRASH BUT DANNY PLEASE SUMMARIZE() TOP 5 AND BOTTOM 5 COUNTIES FOR THE OUTCOMES GRAPH (AND LIST THEM OUT IF POSSIBLE THX <3 )
 
 ## Descriptive Summary
+
+First, we want to understand all the chosen variables we have. Since they are all continuous, we want to look at how many data points are being missing, their mean, median, and standard deviation. The code chunk below summarizes all of that statistics from our `merge` dataset.
+
 ```{r, warning=FALSE}
 merge_cont =
   merge %>% 
@@ -383,20 +440,15 @@ kable(numeric_summary, "html", digits = 1) %>%
   column_spec(4, width = "3cm") %>%
   column_spec(5, width = "2cm")
 
-#numeric_summary_df <- as.data.frame(numeric_summary)
-
-#summary_plot =
-#  plot_ly(numeric_summary_df, x = ~Mean, y = ~Variables, type = 'box', text = ~Variables, hoverinfo = 'mean', mean = "Mean") %>%
-#  layout(title = 'Mean',
-#         xaxis = list(title = 'Mean'),
-#         yaxis = list(title = 'Variables'))
-
-#summary_plot
-
 ```
+
+The table provides descriptive statistics for various variables in the dataset. Key insights include the average `annual_pm2.5` level being 7.0, with a small standard deviation of 1.1, indicating relatively consistent air quality. Additionally, variables such as `premature_percentage` and `cancer_mortality_per_10k` show slight variability with a small number of missing values, while hospitalization rates and demographic characteristics exhibit diverse distributions. Overall, the summary highlights the central tendency, variability, and distribution characteristics of the dataset's variables.
+
 
 ## Percentage of High Income
 Hover over the interactive graph or zoom in for more detailed information. 
+
+Then, we aimed to look that the distribution of `percent_high_income` across all counties. We performed a general barplot that allowed us to understand the overall distribution.
 
 ```{r warning=FALSE}
 merge %>%
@@ -419,6 +471,8 @@ The bar chart depicts the "Percentage of High Income" across 62 counties of New 
 ## Racial Composition 
 Hover over the interactive graph or zoom in for more detailed information. 
 
+Due to the nature of variety of racial group indicators of each county, we wanted to make a stacked bargraph to see the different between each county's racial composition.
+
 ```{r warning=FALSE}
 race_plot <- merge %>% 
   select (county, percent_non_hisp_white, percent_non_hisp_black, percent_hisp_white, percent_hisp_black, percent_other) %>%
@@ -436,18 +490,18 @@ race_plot%>%
 This stacked bar chart displays the racial demographics across 62 New York counties. Each bar represents a county and is divided into segments that reflect the percentage of the county's population of the following racial categories: non-Hispanic White, non-Hispanic Black, Hispanic White, Hispanic Black, and Other. The majority of New York State population is non-Hispanic-White, which is also the major racial group in almost all counties, except in Bronx county and Queens county. 
 
 ## 5 Outcome Graphs {.tabset .tabset-fade}
-The prevalence of our 5 outcomes of interest across 62 counties are illustrated in these 5 graphs below.
+The prevalence of our 5 outcomes of interest across 62 counties are illustrated in these 5 graphs below. For each outcome, we have highlighted the TOP 5 to be circled with <span style="color:red;"> red color</span>, while the bottom 5 will be circled with <span style="color:blue;"> blue color</span>, for easier understanding as there are many data points for NY State.
 
 ### Low birthweight Rate 
 Hover over the interactive graph or zoom in for more detailed information. 
 
 ```{r warning=FALSE}
+# Create a scatter plot
 LBR_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
     y = ~percent_lowbirthweight,
-    color = ~county,
     type = "scatter",
     mode = "markers"
   ) %>%
@@ -458,43 +512,123 @@ LBR_graph <- merge %>%
     showlegend = FALSE
   )
 
+# Identify the top and bottom points
+top_points <- merge %>% arrange(desc(percent_lowbirthweight)) %>% slice_head(n = 5)
+bottom_points <- merge %>% arrange(percent_lowbirthweight) %>% slice_head(n = 5)
+
+# Identify the other points
+suppressMessages({other_points <- merge %>%
+  anti_join(top_points) %>%
+  anti_join(bottom_points)})
+
+# Add markers for the top and bottom points
+LBR_graph <- LBR_graph %>%
+  add_markers(
+    data = top_points,
+    x = ~county,
+    y = ~percent_lowbirthweight,
+    color = I("red"),  # Customize color for top points
+    size = I(10),      # Customize marker size for top points
+    name = "Top 5"
+  ) %>%
+  add_markers(
+    data = bottom_points,
+    x = ~county,
+    y = ~percent_lowbirthweight,
+    color = I("blue"),  # Customize color for bottom points
+    size = I(10),       # Customize marker size for bottom points
+    name = "Bottom 5") %>%
+  add_markers(
+    data = other_points,
+    x = ~county,
+    y = ~percent_lowbirthweight,
+    color = I("grey"),  # Customize color for other points
+    size = I(5),        # Customize marker size for other points
+    name = "Other Points"
+  )
+
+# Display the plot
 LBR_graph
+
 ```
+
+TOP 5: <span style="color:red;"> (Bronx, 10.2), (Schenectady, 9.2), (Monroe, 9.1), (Fulton, 8.8), (Erie, 8.8) </span>.
+
+BOTTOM 5: <span style="color:blue;"> (Hamilton,0), (Schuyler,2.8), (Yates, 4), (Schoharie, 5.1), (Rockland, 5.6)</span>.  
 
 ### Premature Birth 
 Hover over the interactive graph or zoom in for more detailed information. 
 
 ```{r warning=FALSE}
+# Create a scatter plot
 premature_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
     y = ~premature_percentage,
-    color = ~county,
     type = "scatter",
     mode = "markers"
   ) %>%
   layout(
     title = "Rate of Premature Birth",
     xaxis = list(title = "County", tickangle = 90),
-    yaxis = list(title = "Rate of Premature Birth"),
+    yaxis = list(title = "Percentage of Premature Birth"),
     showlegend = FALSE
   )
 
+# Identify the top and bottom points
+top_points1 <- merge %>% arrange(desc(premature_percentage)) %>% slice_head(n = 5)
+bottom_points1 <- merge %>% arrange(premature_percentage) %>% slice_head(n = 5)
+
+# Identify the other points
+suppressMessages({other_points1 <- merge %>%
+  anti_join(top_points1) %>%
+  anti_join(bottom_points1)})
+
+# Add markers for the top and bottom points
+premature_graph <- premature_graph %>%
+  add_markers(
+    data = top_points1,
+    x = ~county,
+    y = ~premature_percentage,
+    color = I("red"),  # Customize color for top points
+    size = I(10),      # Customize marker size for top points
+    name = "Top 5"
+  ) %>%
+  add_markers(
+    data = bottom_points1,
+    x = ~county,
+    y = ~premature_percentage,
+    color = I("blue"),  # Customize color for bottom points
+    size = I(10),       # Customize marker size for bottom points
+    name = "Bottom 5") %>%
+  add_markers(
+    data = other_points1,
+    x = ~county,
+    y = ~premature_percentage,
+    color = I("grey"),  # Customize color for other points
+    size = I(5),        # Customize marker size for other points
+    name = "Other Points"
+  )
+
+# Display the plot
 premature_graph
 ```
 
+TOP 5: <span style="color:red;"> (Washington, 11.1), (Schenectady, 10.3), (Bronx, 10.3), (Sullivan, 10.3), (Wyoming, 10.3) </span>.
+
+BOTTOM 5: <span style="color:blue;"> (Schuyler,5.2), (Yates , 6), (Rockland, 6.3), (Tompskin, 6.5), (Lewis, 7)</span>.    
 
 ### Asthma Hospitalization 
 Hover over the interactive graph or zoom in for more detailed information. 
 
 ```{r warning=FALSE}
+# Create a scatter plot
 asthma_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
     y = ~asthma_hosp_rate_per_10k,
-    color = ~county,
     type = "scatter",
     mode = "markers"
   ) %>%
@@ -505,42 +639,125 @@ asthma_graph <- merge %>%
     showlegend = FALSE
   )
 
+# Identify the top and bottom points
+top_points2 <- merge %>% arrange(desc(asthma_hosp_rate_per_10k)) %>% slice_head(n = 5)
+bottom_points2 <- merge %>% arrange(asthma_hosp_rate_per_10k) %>% slice_head(n = 5)
+
+# Identify the other points
+suppressMessages({other_points2 <- merge %>%
+  anti_join(top_points2) %>%
+  anti_join(bottom_points2)})
+
+# Add markers for the top and bottom points
+asthma_graph <- asthma_graph %>%
+  add_markers(
+    data = top_points2,
+    x = ~county,
+    y = ~asthma_hosp_rate_per_10k,
+    color = I("red"),  # Customize color for top points
+    size = I(10),      # Customize marker size for top points
+    name = "Top 5"
+  ) %>%
+  add_markers(
+    data = bottom_points2,
+    x = ~county,
+    y = ~asthma_hosp_rate_per_10k,
+    color = I("blue"),  # Customize color for bottom points
+    size = I(10),       # Customize marker size for bottom points
+    name = "Bottom 5") %>%
+  add_markers(
+    data = other_points2,
+    x = ~county,
+    y = ~asthma_hosp_rate_per_10k,
+    color = I("grey"),  # Customize color for other points
+    size = I(5),        # Customize marker size for other points
+    name = "Other Points"
+  )
+
+# Display the plot
 asthma_graph
 ```
+
+TOP 5: <span style="color:red;"> (Bronx, 28.4), (Kings, 10.7), (New York, 8.4), (Richmond, 7.9), (Queens, 7.8) </span>.
+
+BOTTOM 5: <span style="color:blue;"> (Orleans,1.6), (Seneca , 1.7), (Tompskin, 1.7), (Fulton, 1.7), (Madison, 1.8)</span>. 
 
 ### Cancer Mortality Rate 
 Hover over the interactive graph or zoom in for more detailed information. 
 
 ```{r warning=FALSE}
+# Create a scatter plot
 cancer_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
     y = ~cancer_mortality_per_10k,
-    color = ~county,
     type = "scatter",
     mode = "markers"
   ) %>%
   layout(
     title = "Rate of Cancer Mortality",
     xaxis = list(title = "County", tickangle = 90),
-    yaxis = list(title = "Rate per 100k"),
+    yaxis = list(title = "Rate per 10k"),
     showlegend = FALSE
   )
 
+# Identify the top and bottom points
+top_points3 <- merge %>% arrange(desc(cancer_mortality_per_10k)) %>% slice_head(n = 5)
+bottom_points3 <- merge %>% arrange(cancer_mortality_per_10k) %>% slice_head(n = 5)
+
+# Identify the other points
+suppressMessages({other_points3 <- merge %>%
+  anti_join(top_points3) %>%
+  anti_join(bottom_points3)})
+
+# Add markers for the top and bottom points
+cancer_graph <- cancer_graph %>%
+  add_markers(
+    data = top_points3,
+    x = ~county,
+    y = ~cancer_mortality_per_10k,
+    color = I("red"),  # Customize color for top points
+    size = I(10),      # Customize marker size for top points
+    name = "Top 5"
+  ) %>%
+  add_markers(
+    data = bottom_points3,
+    x = ~county,
+    y = ~cancer_mortality_per_10k,
+    color = I("blue"),  # Customize color for bottom points
+    size = I(10),       # Customize marker size for bottom points
+    name = "Bottom 5") %>%
+  add_markers(
+    data = other_points3,
+    x = ~county,
+    y = ~cancer_mortality_per_10k,
+    color = I("grey"),  # Customize color for other points
+    size = I(5),        # Customize marker size for other points
+    name = "Other Points"
+  )
+
+# Display the plot
 cancer_graph
 ```
+
+
+TOP 5: <span style="color:red;"> (Columbia, 82.23), (Warren, 80.66), (Greene, 79.08), (Niagara, 78.86),  (Schuyler, 77.66) </span>.
+
+BOTTOM 5: <span style="color:blue;"> (Bronx ,45.87), (Kings , 47.96), (Tompskin, 49.56), (Queens, 51.6), (Orange, 53.48) </span>. 
+
 
 ### Cardiovascular Rate 
 Hover over the interactive graph or zoom in for more detailed information. 
 
 ```{r warning=FALSE}
+
+# Create a scatter plot
 cardio_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
     y = ~cardio_hosp_rate_per_10k,
-    color = ~county,
     type = "scatter",
     mode = "markers"
   ) %>%
@@ -551,31 +768,48 @@ cardio_graph <- merge %>%
     showlegend = FALSE
   )
 
+# Identify the top and bottom points
+top_points4 <- merge %>% arrange(desc(cardio_hosp_rate_per_10k)) %>% slice_head(n = 5)
+bottom_points4 <- merge %>% arrange(cardio_hosp_rate_per_10k) %>% slice_head(n = 5)
+
+# Identify the other points
+suppressMessages({other_points4 <- merge %>%
+  anti_join(top_points4) %>%
+  anti_join(bottom_points4)})
+
+# Add markers for the top and bottom points
+cardio_graph <- cardio_graph %>%
+  add_markers(
+    data = top_points4,
+    x = ~county,
+    y = ~cardio_hosp_rate_per_10k,
+    color = I("red"),  # Customize color for top points
+    size = I(10),      # Customize marker size for top points
+    name = "Top 5"
+  ) %>%
+  add_markers(
+    data = bottom_points4,
+    x = ~county,
+    y = ~cardio_hosp_rate_per_10k,
+    color = I("blue"),  # Customize color for bottom points
+    size = I(10),       # Customize marker size for bottom points
+    name = "Bottom 5") %>%
+  add_markers(
+    data = other_points4,
+    x = ~county,
+    y = ~cardio_hosp_rate_per_10k,
+    color = I("grey"),  # Customize color for other points
+    size = I(5),        # Customize marker size for other points
+    name = "Other Points"
+  )
+
+# Display the plot
 cardio_graph
 ```
 
-### Outcomes Overlay
-Hover over the interactive graph or zoom in for more detailed information. 
+TOP 5: <span style="color:red;"> (Montgomery, 200.1), (Greene, 192.3), (Wayne, 191), (Niagara, 182.8), (Sullivan, 181.8) </span>.
 
-NOT SURE IF WE STILL NEED THIS!!!!!!!
-
-```{r warning=FALSE}
-fig <-  plot_ly()
-
-fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$percent_lowbirthweight, type = "scatter", mode = "markers", name = "Low Birthweight Rate")
-fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$premature_percentage, type = "scatter", mode = "markers", name = "Premature Birth Rate")
-fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$asthma_hosp_rate_per_10k, type = "scatter", mode = "markers", name = "Asthma Hospitalization Rate")
-fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$cancer_mortality_per_10k, type = "scatter", mode = "markers", name = "Cancer Mortality Rate")
-fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$cardio_hosp_rate_per_10k, type = "scatter", mode = "markers", name = "Cardiovascular Disease Hospitalization Rate")
-
-fig <- fig %>% layout(
-  title = "Overlay of 5 Outcomes",
-  xaxis = list(title = "County", tickangle = 90),
-  yaxis = list(title = "Rate"),
-  showlegend = TRUE
-)
-fig
-```
+BOTTOM 5: <span style="color:blue;"> (Tompskin ,80.4), (Tioga , 84.3), (Chautauqua, 90.2), (Rockland, 104.4), (Essex, 105.8) </span>. 
 
 
 # Statistical Analysis 
