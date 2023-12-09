@@ -10,6 +10,7 @@ editor_options:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+library(ggplot2)
 library(dplyr)
 library(readxl)
 library(rvest)
@@ -18,6 +19,8 @@ library(knitr)
 library(sjPlot)
 library(sjmisc)
 library(sjlabelled)
+library(survival)
+library(kableExtra)
 ```
 
 # Motivation
@@ -26,11 +29,11 @@ _Provide an overview of the project goals and motivation_
 
 The motivation for a project exploring the correlation between low birth weight, premature birth rate, cancer mortality rate, cardiovascular disease hospitalization rate, asthma hospitalization rate and PM2.5 concentration, as well as socioeconomic, racial, education, and gender factors across the 62 counties of New York State, stems from a compelling public health imperative. All the outcomes of interest are critical indicators of population health. By examining the impact of fine particulate pollution, this project aims to uncover environmental health disparities that disproportionately affect under-served communities. It seeks to inform public health policy by highlighting the need for targeted interventions that could mitigate the adverse effects of air pollution on vulnerable populations, including pregnant women and newborns. The analysis of socioeconomic and racial factors will offer insights into the complex interplay between environment and social determinants of health, potentially guiding urban planning and healthcare resource allocation. Furthermore, by considering gender-specific vulnerabilities, the project aims to provide a comprehensive overview of the risk landscape, fostering community awareness and prompting action to improve air quality and health equity in one of the most densely populated urban areas in the world.
 
-# Related work: KEVIN
+# Related Work: KEVIN
 
 _Anything that inspired you, such as a paper, a web site, or something we discussed in class._
 
-# Initial questions: KEVIN
+# Initial Questions: KEVIN
 
 _What questions are you trying to answer? How did these questions evolve over the course of the project? What new questions did you consider in the course of your analysis?_
 
@@ -38,8 +41,9 @@ _What questions are you trying to answer? How did these questions evolve over th
 
 _Source, scraping method, cleaning, etc._
 
-#### Data Import
-```{r}
+## Data Import
+```{r include=FALSE}
+
 lowbirthweight <- read_csv("csv_NYC_lowbirthweight.csv")
 pm2_5 <- read_csv("pm2.5.csv")
 edu_NY <- read_excel("Edu_NY.xlsx")
@@ -52,10 +56,10 @@ uscounties <- read_csv("uscounties.csv") #Simplemaps.com
 
 ```
 
-#### Data Wrangling  
+## Data Wrangling  
 
-##### PM2.5 Dataset  
-```{r}
+### PM2.5 Dataset  
+```{r warning=FALSE}
 pm2_5 <- pm2_5 %>% 
   janitor::clean_names()%>%
   select (county,value) %>%
@@ -65,11 +69,11 @@ The dataset is obtained from EPH Tracking Website from CDC (https://ephtracking.
   - `county`: NY county name   
   - `annual_pm2.5`: annual estimated PM2.5 concentration at each county (ug/m^3)
 
-##### Demographic Dataset  
+### Demographic Dataset  
 The following set of demographic datasets is obtained from Census Reporter webpage (https://censusreporter.org/).
 
-###### Education Attainment
-```{r}
+#### Education Attainment
+```{r, warning=FALSE}
 edu <- edu_NY %>% 
   janitor::clean_names()%>%
   mutate (percentage_high_education = (bach_male+master_male+prof_male+doct_male+bach_female+master_female+prof_female+doct_female)/total) %>%
@@ -84,8 +88,8 @@ This has `r nrow(edu)` rows and `r ncol(edu)` columns of data. In which, 2 varia
   - `county`: NY county name   
   - `percentage_high_education`: percentage of population who finished a higher education level (higher than a bachelor degree)
 
-###### Ethnicity
-```{r}  
+#### Ethnicity
+```{r warning=FALSE}  
 race_non_hisp_white <- race_NY %>% 
   janitor::clean_names()%>%
   filter( x1 == "White Non-Hispanic") %>% 
@@ -155,8 +159,8 @@ This has `r nrow(race_merge)` rows and `r ncol(race_merge)` columns of data. In 
   - `percent_other`: percentage of population who are identified as any other ethinic groups    
 
 
-###### Household Income
-```{r}
+#### Household Income
+```{r warning=FALSE}
 income <- HHincome_NY %>%
   janitor::clean_names() %>% 
   filter (x1 == "percent_high_income") %>%
@@ -174,8 +178,8 @@ This has `r nrow(income)` rows and `r ncol(income)` columns of data. In which, 2
   - `county`: NY county name   
   - `percent_high_income`: percentage of population who are at higher income households (>$75,000 annually)
 
-###### Median Age
-```{r}
+#### Median Age
+```{r warning=FALSE}
 age <- Age_NY %>% 
   janitor::clean_names() %>% 
   pivot_longer(
@@ -192,8 +196,8 @@ This has `r nrow(age)` rows and `r ncol(age)` columns of data. In which, 2 varia
   - `county`: NY county name   
   - `median_age`: median age of the population at each county  
 
-###### Sex
-```{r}
+#### Sex
+```{r warning=FALSE}
 sex <- Sex_NY %>% 
   janitor::clean_names() %>% 
   filter (x1 == "Male:") %>%
@@ -211,8 +215,8 @@ This has `r nrow(sex)` rows and `r ncol(sex)` columns of data. In which, 2 varia
   - `county`: NY county name   
   - `percent_male`: percentage of population who are identified as male  
 
-##### Low Birthweight Data 
-```{r}
+#### Low Birthweight Data 
+```{r warning=FALSE}
 lowbirthweight <- lowbirthweight %>% 
   janitor::clean_names()%>%
   select (region_county, percentage)%>%
@@ -222,10 +226,10 @@ This has `r nrow(lowbirthweight)` rows and `r ncol(lowbirthweight)` columns of d
   - `county`: NY county name   
   - `percent_lowbirthweight`: percentage of children being born being identified as low birth weight (<2,500g) (https://www.health.ny.gov/)
 
-##### Health Indicator Dataset 
+#### Health Indicator Dataset 
 The following dataset is obtained from New York State Department of Health (https://www.health.ny.gov/) that contains 4 different health indicators that will complement with the low birthweight. These 5 will act as our outcomes of interest for our regression models.
 
-```{r}
+```{r warning=FALSE}
 health <- health %>%
   janitor::clean_names()%>%
   select (geographic_area,indicator_title,topic_area,rate_percent,measurement) %>%
@@ -266,9 +270,9 @@ They are:
   - `cardio_hosp_rate_per_10k`": percentage of cardiovascular-disease-related hospitalization per 10 thousands people in each NY county (Cardiovascular Disease Indicator)   
   - `premature_percentage`: percentage of children being born prematurely (<37  gestational weeks) in each NY county
 
-##### Merge dataset:
+### Merge dataset
 Here we perform `inner_join()` to create 2 bigger datasets `health_merge` and `demographic_merge`. Then, we join them with our `lowbirthweight` & `pm2_5` tp make a finalized data frame called `merge`. And, we will use this for regression model. 
-```{r}
+```{r warning=FALSE}
 health_merge <- maternal %>% 
   inner_join(cancer, by = "county") %>%
   inner_join(resp, by = "county") %>% 
@@ -296,8 +300,8 @@ merge <- merge %>%
 
 ```
 
-##### Making Map File
-```{r}
+### Making Map File
+```{r warning=FALSE}
 uscounties <- uscounties %>% 
   filter (state_id == "NY") %>%
   select (county, lat, lng)
@@ -308,13 +312,22 @@ map <- merge %>%
 write.csv(map, "NY_map.csv", row.names = FALSE)
 
 ```
+This file is specifically made for the purpose of making map (in Shiny App).
 
-# Exploratory Analysis
+
+# Exploratory Data Analysis (EDA) 
 
 _Visualizations, summaries, and exploratory statistical analyses. Justify the steps you took, and show any major changes to your ideas._
 
-###### Percentage of High Income
-```{r}
+### Summary
+```{r, warning=FALSE}
+
+
+
+```
+
+### Percentage of High Income
+```{r warning=FALSE}
 merge %>%
  plot_ly(
     x = ~reorder(county, percent_high_income),
@@ -331,7 +344,7 @@ merge %>%
 ```
 
 ###### Racial Composition 
-```{r}
+```{r warning=FALSE}
 race_plot <- merge %>% 
   select (county, percent_non_hisp_white, percent_non_hisp_black, percent_hisp_white, percent_hisp_black, percent_other) %>%
   pivot_longer(
@@ -348,7 +361,7 @@ race_plot%>%
 ##### Outcome Graphs 
 
 ###### Low birthweight Rate 
-```{r}
+```{r warning=FALSE}
 merge %>%
   drop_na() %>%
   plot_ly(
@@ -367,7 +380,7 @@ merge %>%
 ```
 
 ###### Premature Birth 
-```{r}
+```{r warning=FALSE}
 merge %>%
   drop_na() %>%
   plot_ly(
@@ -387,7 +400,7 @@ merge %>%
 
 
 ###### Asthma Hospitalization 
-```{r}
+```{r warning=FALSE}
 merge %>%
   drop_na() %>%
   plot_ly(
@@ -406,7 +419,7 @@ merge %>%
 ```
 
 ###### Cancer Mortality Rate 
-```{r}
+```{r warning=FALSE}
 merge %>%
   drop_na() %>%
   plot_ly(
@@ -425,7 +438,7 @@ merge %>%
 ```
 
 ###### Cardiovascular Rate 
-```{r}
+```{r warning=FALSE}
 merge %>%
   drop_na() %>%
   plot_ly(
@@ -444,7 +457,7 @@ merge %>%
 ```
 
 
-# Additional analysis
+# Statistical Analysis
 
 _If you undertake formal statistical analyses, describe these in detail_
 
@@ -468,25 +481,23 @@ _Outcome = Annual pm 2.5 concentration + median age + percentage of male + perce
 
 We then perform __bidirectional stepwise selection__ on all five models and output the best models. The full model and the resulting best models after stepwise selection for each outcome are detailed below:
 
-#### Low Birth Weight Rate vs. Annual pm 2.5 Concentration 
+#### Low Birth Weight Rate vs. Annual PM2.5 Concentration 
 
 ##### Linear regression 
-```{r}
+```{r warning=FALSE}
 lm_pm2.5_birthweight_adjusted <-lm(percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
-summary(lm_pm2.5_birthweight_adjusted)
 ```
 
 ##### Stepwise selection
-```{r}
-step(lm_pm2.5_birthweight_adjusted, direction = 'both')
+```{r message=FALSE}
+lm_pm2.5_birthweight_adjusted_best <- step(lm_pm2.5_birthweight_adjusted, direction = 'both', trace=FALSE)
 
-lm_pm2.5_birthweight_adjusted_best <- lm(percent_lowbirthweight~median_age + percent_non_hisp_black, data=merge)
-
-summary (lm_pm2.5_birthweight_adjusted_best) %>%
+summary(lm_pm2.5_birthweight_adjusted_best)%>%
   tab_model()
 ```
 
-_Interpretation_
+
+_Interpretation_  
 
 The best model that was outputted by the stepwise regression is 
 
@@ -503,16 +514,14 @@ The adjusted R-squared of 0.249 implies that 24.9% of the variation in the respo
 #### Premature Birth Weight Rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression 
-```{r}
+```{r warning=FALSE}
 lm_pm2.5_premature_adjusted <-lm(premature_percentage ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
-summary(lm_pm2.5_premature_adjusted)
 ```
 
 ##### Stepwise selection
-```{r}
-step(lm_pm2.5_premature_adjusted, direction = 'both')
+```{r warning=FALSE}
+lm_pm2.5_premature_adjusted_best <- step(lm_pm2.5_premature_adjusted, direction = 'both', trace=FALSE)
 
-lm_pm2.5_premature_adjusted_best <- lm(premature_percentage ~ median_age + percent_non_hisp_black, data = merge)
 summary(lm_pm2.5_premature_adjusted_best)%>%
   tab_model()
 ```
@@ -534,16 +543,14 @@ The adjusted R-squared of 0.105 implies that 10.5% of the variation in the respo
 #### Cancer Mortality Rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression 
-```{r}
+```{r warning=FALSE}
 lm_pm2.5_cancer_adjusted <-lm(cancer_mortality_per_100k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
-summary(lm_pm2.5_cancer_adjusted)
 ```
 
 ##### Stepwise selection 
-```{r}
-step(lm_pm2.5_cancer_adjusted, direction = 'both')
+```{r warning=FALSE}
+lm_pm2.5_cancer_adjusted_best<-step(lm_pm2.5_cancer_adjusted, direction = 'both', trace=FALSE)
 
-lm_pm2.5_cancer_adjusted_best <- lm(cancer_mortality_per_100k ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percent_male, data =merge)
 summary (lm_pm2.5_cancer_adjusted_best)%>%
   tab_model()
 ```
@@ -566,16 +573,14 @@ The adjusted R-squared of 0.105 implies that 10.5% of the variation in the respo
 ##### Asthma Hospitalization rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression
-```{r}
+```{r warning=FALSE}
 lm_pm2.5_asthma_adjusted <-lm(asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
-summary(lm_pm2.5_asthma_adjusted)
 ```
 
 ##### Stepwise selection
-```{r}
-step(lm_pm2.5_asthma_adjusted, direction = 'both')
+```{r warning=FALSE}
+lm_pm2.5_asthma_adjusted_best <- step(lm_pm2.5_asthma_adjusted, direction = 'both', trace=FALSE)
 
-lm_pm2.5_asthma_adjusted_best <- lm(asthma_hosp_rate_per_10k~ percent_high_income + percent_non_hisp_black + percent_hisp_black + percentage_high_education, data=merge)
 summary(lm_pm2.5_asthma_adjusted_best)%>%
   tab_model()
 ```
@@ -583,23 +588,16 @@ summary(lm_pm2.5_asthma_adjusted_best)%>%
 ##### Cardiovascular Disease rate vs. Annual pm 2.5 Concentration
 
 ##### Linear regression
-```{r}
+```{r warning=FALSE}
 lm_pm2.5_cardio_adjusted <-lm(cardio_hosp_rate_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
-summary(lm_pm2.5_cardio_adjusted)
 ```
 
 ##### Stepwise selection
-```{r}
-step(lm_pm2.5_cardio_adjusted, direction = 'both')
+```{r warning=FALSE}
+lm_pm2.5_cardio_adjusted_best<-step(lm_pm2.5_cardio_adjusted, direction = 'both', trace=FALSE)
 
-lm_pm2.5_cardio_adjusted_best <-lm(cardio_hosp_rate_per_10k ~annual_pm2.5 + median_age +percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percentage_high_education + percent_male, data=merge)
 summary (lm_pm2.5_cardio_adjusted_best)%>%
   tab_model()
-```
-
-#### All models together 
-```{r}
-tab_model(lm_pm2.5_birthweight_adjusted_best,lm_pm2.5_premature_adjusted_best,lm_pm2.5_cancer_adjusted_best,lm_pm2.5_asthma_adjusted_best,lm_pm2.5_cardio_adjusted )
 ```
 
 # Discussion: KEVIN
