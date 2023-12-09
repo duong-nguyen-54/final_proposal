@@ -362,7 +362,7 @@ race_plot%>%
 
 ###### Low birthweight Rate 
 ```{r warning=FALSE}
-merge %>%
+LBR_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
@@ -381,7 +381,7 @@ merge %>%
 
 ###### Premature Birth 
 ```{r warning=FALSE}
-merge %>%
+premature_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
@@ -401,7 +401,7 @@ merge %>%
 
 ###### Asthma Hospitalization 
 ```{r warning=FALSE}
-merge %>%
+asthma_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
@@ -420,7 +420,7 @@ merge %>%
 
 ###### Cancer Mortality Rate 
 ```{r warning=FALSE}
-merge %>%
+cancer_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
@@ -439,7 +439,7 @@ merge %>%
 
 ###### Cardiovascular Rate 
 ```{r warning=FALSE}
-merge %>%
+cardio_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
