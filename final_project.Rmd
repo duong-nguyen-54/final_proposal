@@ -585,7 +585,7 @@ _If you undertake formal statistical analyses, describe these in detail_
 ## Method
 After cleaning the data, we then look at the effect that the annual concentration of pm 2.5 separately has on multiple outcomes among 62 counties in New York, including low birth weight rate, premature birth rate, cancer mortality rate, asthma-related hospitalization rate, and cardiovascular-disease-related hospitalization rate. 
 
-Since all of the outcomes are measured as rates (i.e., continuous), we use __linear regression models__ to assess the effect of annual concentration of pm 2.5 on the outcomes of interests, adjusting for age, sex, ethnicity, education, income. In our models: 
+Since all of the outcomes are measured as rates (i.e., continuous), we use __linear regression (LR) models__ to assess the effect of annual concentration of pm 2.5 on the outcomes of interests, adjusting for age, sex, ethnicity, education, income. In our models: 
 
 - Age is reported as a continuous variable that reflects the median age of each county.
 
@@ -603,10 +603,9 @@ _Outcome = Annual pm 2.5 concentration + median age + percentage of male + perce
 
 We then perform __bidirectional stepwise selection__ on all five models and output the best models. The full model and the resulting best models after stepwise selection for each outcome are detailed below:
 
-## Linear regression models by Outcomes {.tabset .tabset-fade}
+## LR models by Outcomes {.tabset .tabset-fade}
 
-### Low Birth Weight Rate {.tabset .tabset-fade}
-Detailed below are the the initial model, the final model and the interpretation for each outcome.
+### Low Birth Weight Rate 
 
 #### Stepwise regression 
 
@@ -639,8 +638,7 @@ _low birth weight = 11.53 - 0.11(median age) + 8.05 (percent_non_hisp_black)_
 The adjusted R-squared of 0.249 implies that 24.9% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
 
 
-### Premature Birth Weight Rate {.tabset .tabset-fade}
-Detailed below are the the initial model, the final model and the interpretation for each outcome.
+### Premature Birth Weight Rate 
 
 #### Stepwise regression 
 
