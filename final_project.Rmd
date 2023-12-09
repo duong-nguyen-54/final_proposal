@@ -242,8 +242,9 @@ health <- health %>%
 cancer <- health %>% 
   filter (topic_area == "Cancer Indicators") %>% 
   filter (indicator_title == "All cancer incidence rate per 100,000") %>% 
-  select (-c(indicator_title, topic_area, measurement)) %>% 
-  rename (cancer_mortality_per_100k = "rate_percent")
+  select (-c(indicator_title, topic_area, measurement)) %>%
+  mutate(rate_percent = as.numeric(rate_percent)/10) %>%
+  rename (cancer_mortality_per_10k = "rate_percent")
 
 resp <- health %>%
   filter (topic_area == "Respiratory Disease Indicators") %>%
@@ -265,7 +266,7 @@ maternal <- health %>%
 
 ```
 They are:   
-  - `cancer_mortality_per_100k`: percentage of cancer mortality per 100 thousands people in each NY county (Cancer Indicator)    
+  - `cancer_mortality_per_10k`: percentage of cancer mortality per 100 thousands people in each NY county (Cancer Indicator)    
   - `asthma_hosp_rate_per_10k`: percentage of asthma hospitalization per 10 thousands people in each NY county (Respiratory Disease Indicator)     
   - `cardio_hosp_rate_per_10k`": percentage of cardiovascular-disease-related hospitalization per 10 thousands people in each NY county (Cardiovascular Disease Indicator)   
   - `premature_percentage`: percentage of children being born prematurely (<37  gestational weeks) in each NY county
@@ -296,7 +297,7 @@ merge <- merge %>%
   mutate(asthma_hosp_rate_per_10k = as.numeric(asthma_hosp_rate_per_10k))%>%
   mutate(cardio_hosp_rate_per_10k = as.numeric(cardio_hosp_rate_per_10k)) %>%
   mutate(premature_percentage = as.numeric(premature_percentage))%>%
-  mutate(cancer_mortality_per_100k = as.numeric(cancer_mortality_per_100k))
+  mutate(cancer_mortality_per_10k = as.numeric(cancer_mortality_per_10k))
 
 ```
 
@@ -424,7 +425,7 @@ cancer_graph <- merge %>%
   drop_na() %>%
   plot_ly(
     x = ~county,
-    y = ~cancer_mortality_per_100k,
+    y = ~cancer_mortality_per_10k,
     color = ~county,
     type = "scatter",
     mode = "markers"
@@ -454,6 +455,25 @@ cardio_graph <- merge %>%
     yaxis = list(title = "Rate per 10k"),
     showlegend = FALSE
   )
+```
+
+#### Combine Plot.ly
+```{r warning=FALSE}
+fig <-  plot_ly()
+
+fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$percent_lowbirthweight, type = "scatter", mode = "markers", name = "Low Birthweight Rate")
+fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$premature_percentage, type = "scatter", mode = "markers", name = "Premature Birth Rate")
+fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$asthma_hosp_rate_per_10k, type = "scatter", mode = "markers", name = "Asthma Hospitalization Rate")
+fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$cancer_mortality_per_10k, type = "scatter", mode = "markers", name = "Cancer Mortality Rate")
+fig <- fig %>% add_trace(x = ~merge$county, y = ~merge$cardio_hosp_rate_per_10k, type = "scatter", mode = "markers", name = "Cardiovascular Disease Hospitalization Rate")
+
+fig <- fig %>% layout(
+  title = "Overlay of 5 Outcomes",
+  xaxis = list(title = "County", tickangle = 90),
+  yaxis = list(title = "Rate"),
+  showlegend = TRUE
+)
+fig
 ```
 
 
@@ -544,7 +564,7 @@ The adjusted R-squared of 0.105 implies that 10.5% of the variation in the respo
 
 ##### Linear regression 
 ```{r warning=FALSE}
-lm_pm2.5_cancer_adjusted <-lm(cancer_mortality_per_100k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
+lm_pm2.5_cancer_adjusted <-lm(cancer_mortality_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
 ##### Stepwise selection 
