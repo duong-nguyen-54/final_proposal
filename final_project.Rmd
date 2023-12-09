@@ -13,6 +13,33 @@ editor_options:
   chunk_output_type: console
 ---
 
+```{css, echo=FALSE}
+/* Style for the main tabs */
+.nav-tabs > li > a {
+  background-color: #A3C4E5; 
+  color: #5F5B57; 
+}
+
+/* Style for the active main tab */
+.nav-tabs > li.active > a {
+  background-color: #4276AA; 
+  color: #ffffff; 
+}
+
+/* Style for the sub-tabs */
+.tab-content .tab-pane .nav > li > a {
+  background-color: #D2D2D2; 
+  color: #3E3D3D; 
+}
+
+/* Style for the active sub-tab */
+.tab-content .tab-pane .nav > li.active > a {
+  background-color: #6D6D6D; 
+  color: #ffffff; 
+}
+```
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo=TRUE)
 library(tidyverse)
@@ -335,6 +362,8 @@ This file is specifically made for the purpose of making map (in Shiny App).
 
 _Visualizations, summaries, and exploratory statistical analyses. Justify the steps you took, and show any major changes to your ideas._
 
+I CRASH BUT DANNY PLEASE SUMMARIZE() TOP 5 AND BOTTOM 5 COUNTIES FOR THE OUTCOMES GRAPH (AND LIST THEM OUT IF POSSIBLE THX <3 )
+
 ## Descriptive Summary
 ```{r, warning=FALSE}
 merge_cont =
@@ -347,7 +376,7 @@ numeric_summary <- skim_table %>%
 
 
 kable(numeric_summary, "html", digits = 1) %>%
-  kable_styling(full_width = FALSE, position = "center", font_size = 15) %>%
+  kable_styling(full_width = FALSE, position = "center", font_size = 13) %>%
   column_spec(1, width = "3cm") %>%
   column_spec(2, width = "3cm") %>%
   column_spec(3, width = "3cm") %>%
@@ -367,6 +396,8 @@ kable(numeric_summary, "html", digits = 1) %>%
 ```
 
 ## Percentage of High Income
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 merge %>%
  plot_ly(
@@ -383,7 +414,11 @@ merge %>%
   )
 ```
 
+The bar chart depicts the "Percentage of High Income" across 62 counties of New York State, ordered from the highest to the lowest percentage. Nassau county has the highest percentage of household with an annual income of more than $75,000 (categorized as high income), while that of the Bronx county is the lowest.
+
 ## Racial Composition 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 race_plot <- merge %>% 
   select (county, percent_non_hisp_white, percent_non_hisp_black, percent_hisp_white, percent_hisp_black, percent_other) %>%
@@ -398,9 +433,14 @@ race_plot%>%
          yaxis = list(title = "Percentage (%)"))
 ```
 
+This stacked bar chart displays the racial demographics across 62 New York counties. Each bar represents a county and is divided into segments that reflect the percentage of the county's population of the following racial categories: non-Hispanic White, non-Hispanic Black, Hispanic White, Hispanic Black, and Other. The majority of New York State population is non-Hispanic-White, which is also the major racial group in almost all counties, except in Bronx county and Queens county. 
+
 ## 5 Outcome Graphs {.tabset .tabset-fade}
+The prevalence of our 5 outcomes of interest across 62 counties are illustrated in these 5 graphs below.
 
 ### Low birthweight Rate 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 LBR_graph <- merge %>%
   drop_na() %>%
@@ -422,6 +462,8 @@ LBR_graph
 ```
 
 ### Premature Birth 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 premature_graph <- merge %>%
   drop_na() %>%
@@ -444,6 +486,8 @@ premature_graph
 
 
 ### Asthma Hospitalization 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 asthma_graph <- merge %>%
   drop_na() %>%
@@ -465,6 +509,8 @@ asthma_graph
 ```
 
 ### Cancer Mortality Rate 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 cancer_graph <- merge %>%
   drop_na() %>%
@@ -486,6 +532,8 @@ cancer_graph
 ```
 
 ### Cardiovascular Rate 
+Hover over the interactive graph or zoom in for more detailed information. 
+
 ```{r warning=FALSE}
 cardio_graph <- merge %>%
   drop_na() %>%
@@ -507,6 +555,10 @@ cardio_graph
 ```
 
 ### Outcomes Overlay
+Hover over the interactive graph or zoom in for more detailed information. 
+
+NOT SURE IF WE STILL NEED THIS!!!!!!!
+
 ```{r warning=FALSE}
 fig <-  plot_ly()
 
@@ -526,10 +578,11 @@ fig
 ```
 
 
-# Statistical Analysis
+# Statistical Analysis 
 
 _If you undertake formal statistical analyses, describe these in detail_
 
+## Method
 After cleaning the data, we then look at the effect that the annual concentration of pm 2.5 separately has on multiple outcomes among 62 counties in New York, including low birth weight rate, premature birth rate, cancer mortality rate, asthma-related hospitalization rate, and cardiovascular-disease-related hospitalization rate. 
 
 Since all of the outcomes are measured as rates (i.e., continuous), we use __linear regression models__ to assess the effect of annual concentration of pm 2.5 on the outcomes of interests, adjusting for age, sex, ethnicity, education, income. In our models: 
@@ -550,16 +603,19 @@ _Outcome = Annual pm 2.5 concentration + median age + percentage of male + perce
 
 We then perform __bidirectional stepwise selection__ on all five models and output the best models. The full model and the resulting best models after stepwise selection for each outcome are detailed below:
 
-## Linear regression models {.tabset .tabset-fade}
+## Linear regression models by Outcomes {.tabset .tabset-fade}
 
-### Low Birth Weight Rate vs. Annual PM2.5 Concentration 
+### Low Birth Weight Rate {.tabset .tabset-fade}
+Detailed below are the the initial model, the final model and the interpretation for each outcome.
 
-#### Full Model 
+#### Stepwise regression 
+
+__Full model__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_birthweight_adjusted <-lm(percent_lowbirthweight ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
-#### Stepwise selection
+__Stepwise selection__
 ```{r message=FALSE, class.source = 'fold-show'}
 lm_pm2.5_birthweight_adjusted_best <- step(lm_pm2.5_birthweight_adjusted, direction = 'both', trace=FALSE)
 
@@ -583,14 +639,17 @@ _low birth weight = 11.53 - 0.11(median age) + 8.05 (percent_non_hisp_black)_
 The adjusted R-squared of 0.249 implies that 24.9% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
 
 
-### Premature Birth Weight Rate vs. Annual pm 2.5 Concentration
+### Premature Birth Weight Rate {.tabset .tabset-fade}
+Detailed below are the the initial model, the final model and the interpretation for each outcome.
 
-#### Full Model 
+#### Stepwise regression 
+
+__Full model__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_premature_adjusted <-lm(premature_percentage ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
-#### Stepwise selection
+__Stepwise selection__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_premature_adjusted_best <- step(lm_pm2.5_premature_adjusted, direction = 'both', trace=FALSE)
 
@@ -612,21 +671,23 @@ _premature birth weight = 4.88 + 0.08(median age) + 8.03 (percent_non_hisp_black
 
 The adjusted R-squared of 0.105 implies that 10.5% of the variation in the response variable can be explained by its linear relationship with the set of the 2 predictors (median age and percentage of non-Hispanic-Black).
 
-### Cancer Mortality Rate vs. Annual pm 2.5 Concentration
+### Cancer Mortality Rate {.tabset .tabset-fade}
+Detailed below are the the initial model, the final model and the interpretation for each outcome.
 
-#### Full Model 
+#### Stepwise regression 
+
+__Full model__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_cancer_adjusted <-lm(cancer_mortality_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
-#### Stepwise selection 
+__Stepwise selection__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_cancer_adjusted_best<-step(lm_pm2.5_cancer_adjusted, direction = 'both', trace=FALSE)
 
 summary (lm_pm2.5_cancer_adjusted_best)%>%
   tab_model()
 ```
-
 
 #### Interpretation
 
@@ -654,14 +715,17 @@ _cancer mortality rate = -1.85 + 13.27(annual pm 2.5) + 13.14(median age) - 213.
 
 The adjusted R-squared of 0.780 implies that 70.8% of the variation in the response variable can be explained by its linear relationship with the set of the 8 predictors (annual pm 2.5 conc., median age, percentage of high income, percentage of 4 ethnicity groups, percentage of male).
 
-### Asthma Hospitalization rate vs. Annual pm 2.5 Concentration
+### Asthma Hospitalization Rate {.tabset .tabset-fade}
+Detailed below are the the initial model, the final model and the interpretation for each outcome.
 
-#### Full Model
+#### Stepwise regression
+
+__Full model__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_asthma_adjusted <-lm(asthma_hosp_rate_per_10k ~ annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
-#### Stepwise selection
+__Stepwise selection__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_asthma_adjusted_best <- step(lm_pm2.5_asthma_adjusted, direction = 'both', trace=FALSE)
 
@@ -687,14 +751,17 @@ _asthma hospitalization rate = 1.36 + 4.65(percent high income) + 13.52(percent 
 
 The adjusted R-squared of 0.930 implies that 93.0% of the variation in the response variable can be explained by its linear relationship with the set of the 4 predictors (percentage of high income, percentage of non-Hispanic-Black, percentage of Hispanic-Black, percentage of higher education).
 
-### Cardiovascular Disease rate vs. Annual pm 2.5 Concentration
+### Cardiovascular Disease Rate {.tabset .tabset-fade}
+Detailed below are the the initial model, the final model and the interpretation for each outcome.
 
-#### Full Model
+#### Stepwise regression
+
+__Full model__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_cardio_adjusted <-lm(cardio_hosp_rate_per_10k ~annual_pm2.5 + median_age + percent_high_income + percent_non_hisp_white + percent_non_hisp_black + percent_hisp_white + percent_hisp_black + percentage_high_education + percent_male, data=merge)
 ```
 
-#### Stepwise selection
+__Stepwise selection__
 ```{r warning=FALSE, class.source = 'fold-show'}
 lm_pm2.5_cardio_adjusted_best<-step(lm_pm2.5_cardio_adjusted, direction = 'both', trace=FALSE)
 
